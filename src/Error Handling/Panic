@@ -1,0 +1,51 @@
+=Rust has a Panic macro  and there are two ways to cause panic in practice:
+I)By taking an action that can cause the code to panic(*accessing an array past the end)
+II)Explicitly calling the panic! macro
+-In both cases a panic is caused to the program
+=By default these panic will print failure messages,unwind clean up a stack and quit
+=Via an environment variable, you can also have Rust display the call stack when the panic occurs to allow to track the source
+the panic
+
+Unwinding the Stack or Aborting in Response in Panic
+=By default, when a panic occurs in a program, the program starts unwinding, which means Rust walks back up
+the stack and cleans up the data for each function it encounters
+=Rust provides the alternative of aborting which ends the program without cleaning up
+
+Memory that the program is using will need to be cleaned up by the Operating System
+=If in an project you need to make the resultant binary as small as possible, one can switch from unwinding to
+aborting upon a panic by adding  panic = 'abort' to the appropriate [profile] section in the
+Cargo.toml file
+*[profile.release]
+panic = 'abort'
+
+Example:
+fn main(){
+  panic!("The program runs into a panic!");
+}
+=The call to panic! causes the error message to be displayed contained in the last two lines
+=The first line of the error, shows the panic message and the place in the source code
+where the panic occurred
+=In one case , the line indicated is part of the code where there is a panic! macro
+In other cases, the panic!  call might be in code that the code calls, and the filename and the line number reported
+by the error message will be someone else's code where the panic! macro is called
+One can use the backtrace of the functions the panic! calls came from to figure out the part of the code that
+causes the problem
+
+bug in code to call the panic
+fn main(){
+  let v = vec![1, 2, 3];
+
+  v[99];
+}
+
+Attempting to access the 100th element of the vector(which is at index 99 because indexing starts at 0)
+but the vector has only three elements. In this situation Rust will panic
+Using [] is supposed to return an element, but if an invalid index is passed, there is no element that Rust could return here
+is correct
+The error mentions that the RUST_BACKTRACE environment variable can be set to get a backtrace of exactly what happened to cause the error
+NOTE: a backtrace is a list of all the functions that have been called to get to this point
+
+=The exact output from an error might be different depending on one's operating system and Rust version
+In order to get backtraces, debug symbols must be enabled.They are enabled by default when using cargo build or cargo run
+without the --release flag
+

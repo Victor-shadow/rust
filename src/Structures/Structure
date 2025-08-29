@@ -1,0 +1,157 @@
+-A structure is another user defined data type available in Rust that allows one to combine
+data items of different types
+-A structure defines data as a key-value pair
+
+Syntax:
+Declare a Structure
+struct Name_of_Structure {
+  field1:data_type,
+  field2:data_type2,
+  field3:data_type3
+}
+Structs are similar to tuples, in that both hold multiple related values
+Like tuples, the pieces of a struct can be of different types
+In a Struct one has to name each piece of data so that it clearly shows what the values mean
+Therefore structs are more flexible than tuples; one does not have to rely on the order of data to specify or access the
+values of an instance
+
+-To define a struct, enter the keyword struct and name the entire struct
+A struct name should describe the significance of the pieces of data grouped together. Then inside curly braces,
+define the names and types of pieces of data which are called fields
+To use Structs after it has been defined, an instance of that struct has to be created by specifying concrete values
+for each of the fields
+An instance of the Structs is created by specifying the name of the struct and then add curly brackets containing
+key:value pairs, where the keys are the names of the fields and the values are the data  stored in the fields
+The fields do not have to be specified in the same order they were created/declared in the struct
+NOTE: A struct is a general template for any data type, and instances fill in that template with particular data to create values
+for the data types
+
+-To get the specific value from the struct a dot notation is used
+If the instance is mutable, a value can be changed using the dot notation and assigning into a particular field
+Rust does not allow that certain fields are marked as mutable. As with expressions, a new instance of the struct can be constructed
+as a last expression in a function body to implicitly return a new instance
+
+Use the Field init shorthand
+-Since parameter names and struct field names are exactly the same the field init shorthand syntax can be used
+*Syntax:
+
+fn main(variable:String, element:String) -> Struct
+ Struct {
+   element: dataType,
+   element1,
+   variable,
+   element3: value,
+   }
+}
+
+//A new instance of Struct is created which has a field name variable
+To set the variable field's value to the value of the variable in the parameter of the Struct function
+Since the variable field and the variable parameter have the same identity, one only needs to write
+variable and not variable:variable
+
+Create instances from other instances  with Struct update Syntax:
+-It is useful to create a new instance of a Struct that includes most values from another instances
+of the same type, but changes some
+The syntax .. specifies that  the remaining fields are not explicitly set should have the same value
+as the fields in the given instance
+
+fn main(){
+  //--snip--
+
+  let variable2 = Struct {
+    element: String::from("");
+    ..variable1
+    };
+ }
+
+
+Tuple Structs Without named fields to create Different Types
+-Rust also supports structs that look similar to Tuples referred to as Tuple Structs
+Tuple structs do not have names associated with their fields,rather they just have the types
+of fields
+-To define a tuple struct
+start with the struct keyword and the struct name followed by the types in the tuple
+Example;
+struct Tuple(i32, i32, i32);
+struct Tuple1(i32, i32, i32);
+
+fn main(){
+   let variable = Tuple(0, 0, 0);
+   let variable2 = Tuple1(0, 0, 0);
+}
+
+
+Unit Like Structs
+-Structs that do not have any fields can also be defined. They are called unit like structs because they behave similarly to
+()
+Unit like structs are useful when one needs to implement a trait  on some type but don't have any data that needs
+-to implement a trait  on some type  but don't have any data that you want to store in the type itself
+
+
+struct AlwaysEqual;
+
+fn main(){
+ let subject = AlwaysEqual;
+}
+
+//to define AlwaysEqual use the struct keyword, the name needed, and then a semicolon
+No need for curly braces or parenthesis
+Then the instance of AlwaysEqual can always be retrieved from the subject variable in a similar way
+using the name defined, without any curly braces or parentheses
+
+Ownership of Struct Data
+-In the Struct definition we use the owned String type rather than the &str string slice type
+This is a deliberate choice because each instance of the struct to own  all of its data and for that data
+to be valid for long as the entire struct is valid
+It is also possible for structs to store references to data owned by something else, but to achieve so the is need for
+use of lifetimes
+-Lifetimes ensure that  the data referenced by the Struct is valid as long as the Struct is
+
+Methods in Structure
+-Methods are like functions. They are a logical group of programming instructions.
+Methods are declared using the fn keyword. The scope of a method  is within the structure block
+
+Methods are declared outside the structure block. The impl keyword is used to define a method within the context of a structure
+The first parameter of a method is always self, which represents the calling instance of the structure
+Methods operate on the data members of a structure
+To invoke a method, one needs to instantiate a structure. The method can be called using the structure instance
+
+Syntax:
+struct My_Struct {}
+ impl My_Struct {
+  //set the method's context
+  fn method_name(){
+    //define the method
+  }
+}
+
+Static methods in Structure
+-Static methods can be used  as utility methods
+-These methods exist even before the structure is instantiated
+Static methods are invoked using the structure's name and can be accessed without an instance
+A static method does not take &self parameter
+
+Syntax: Declare a Static Method
+=A static method like functions and other methods can optionally contain parameters
+
+impl Structure_Name {
+  //static method that creates objects of the Point Structure
+  fn method_name(param1: dataType, param2: dataType) -> return_type{
+  //logic goes here
+  }
+}
+
+Syntax: Invoke a static method
+The structure_name ::syntax is used to access a static method
+* structure_name::method_name(v1, v2)
+
+Debug Trait
+-The Debug Trait enables printing of structs in a useful way
+
+With larger structs it is useful to use the println!(:#?)
+
+Another way to print values from a struct is to use the debug macro(dbg!) which takes the
+ownership of an expression as opposed to println! which takes a reference
+
+NOTE: calling the dbg! macro prints to the standard error console stream(stderr) as opposed to println!
+which prints to the standard output console stream(stdout)

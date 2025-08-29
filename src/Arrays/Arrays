@@ -1,0 +1,64 @@
+-An Array is a collection of values of the same data type(homogenous collection of values)
+
+-Features of an Array
+:An array declaration allocates sequential memory blocks
+:Arrays are static. Once arrays are initialized they cannot be resized
+:Each memory block represents an array element
+:Array elements are identified by an unique integer called the subscript/index of the element
+:Populating the array elements is known as initialization
+:Array element values can be updated or modified but cannot be deleted
+
+Create an array In Rust:
+-An array is created using the [] brackets, and separate the values using a comma
+-Elements of the array should be of the same data type
+let array = [element1, element2, element3, element4, element5];
+
+
+To declare and initialize an array in Rust:
+i)let variable_name = [value1, value2, value3]; //the type of array is inferred from the data type  of the array elements
+//during initialization
+
+ii)let variable_name:[dataType; size] = [value1, value2, value3];
+
+iii)let variable_name:[dataType; size] = [default_value_for_elements, size];
+
+Access Array Elements
+-To access an array element, refer to its index
+Array indices start from 0: [0] is the first element
+
+let array = [element1, element2, element3, element4, element5];
+println!("The first element is: {}", array[0])
+
+
+Change array Values
+To change the value of a specified element, refer to the index number and assign a new value
+-The array must be mutable
+let mut array =  [element1, element2, element3, element3, element4, element5];
+array[0] = value;
+println!("The new value is {}", array[0]);
+
+
+Array Length
+-To obtain the number of elements in the array, use the len() method
+let array = [element1, element2, element3, element4, element5];
+println!("This array has {} elements.", array.len());
+
+Display all elements in an array
+-To Display all the elements inside an array:
+use: println!("{:?}", array);
+
+To print an element from an array:
+use: println!("{}", array[0]);
+
+Note; variables cannot be used to define the size of the array
+Example;
+fn main(){
+   let N: usize = 100;
+   let arr = [0; N]; //error non constant used with constant
+   print!("{}", arr[10]);
+}
+
+//the compiler results in an exception, since the length of the array must be known at compile time
+the value of the variable N will be determined at runtime
+
+

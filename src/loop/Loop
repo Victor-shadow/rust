@@ -1,0 +1,80 @@
+-A loop is a programming structure that repeats a sequence of instructions until a specific condition
+is satisfied
+-Rust also has two types of Loops
+i)indefinite loops: While loop and Loop
+ii)Definite loop: For loop
+
+A loop statement allows one to execute a group of statements/statement multiple times
+
+Definite loop
+-A loop in which the number of iterations is definite/fixed is termed as a definite loop
+The for loop is an implementation of a definite loop
+
+For loop
+-The for loop executes the code block for the specified number of times
+It can be used to iterate over a fixed set of values, such as an array
+
+*Syntax of a for-loop
+for variable_item in lower_bound..upper_bound {
+   //statements
+}
+
+Indefinite loop
+An indefinite loop is used when the number of iterations in a loop is indeterminate or unknown
+They can be implemented using:
+i)While - The while loop executes the instructions each time the condition specified  evaluates to
+true
+ii)Loop - the loop is a while(true) indefinite loop
+
+
+While Loop
+-The while loop runs until the given condition is met
+The loop starts by checking the condition, Here a variable with the local scope to the loop is created
+or an existing variable can be used which marks the start of the loop to use
+The loop is used to check the condition, if it is true then the loop is executed. For this reason, it is also called
+the entry control loop
+Once the condition is true, the statements in the loop body are executed and the loop contains a variable that is updated
+for each iteration
+When the condition becomes false or explicitly asked to break, the loop terminates which marks the end of its life
+cycle
+
+Syntax:
+while condition{
+   statements;
+}
+
+For loop
+-The for loop is similar to the while loop but it has a definite start and endpoint as well as the increment
+for each iteration
+-A variable with a local scope to the loop is created , or an existing variable which marks the start of the loop
+is of use in the loop
+The declared variable is also used to declare the termination condition of the loop
+For all the values in between initial value and termination value return a boolean. It is also an Entry Control loop as the
+condition is checked prior execution of the loop statements
+If the condition checks to true then the loop will be executed and if the value is false or explicitly  defined to exit the loop
+then the loop terminates
+The iteration value is then updated for each iteration
+
+syntax:
+for iterator in range {
+statements;
+}
+
+Loop Statement
+-Rust also supports loop statement
+The loop statement executes until there is a break statement
+Break statement or break keyword is used to exit the loop
+
+syntax:
+loop {
+   //statements
+   //for exit
+   break;
+}
+
+Loop labels
+-if one has loops within loops, break and continue, apply to the innermost loop at that point
+one can optionally specify a loop label on a loop that you can use  with break and continue
+to specify that the keyword apply to the labeled loop instead of the innermost loop
+loop labels must begin with a single quote
+

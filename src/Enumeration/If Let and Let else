@@ -1,0 +1,50 @@
+=The if let syntax lets one combine if and let into a less verbose way to handle values that
+match one pattern while ignoring the rest
+If the value is some, the value is printed out in the Some variant by binding the value to the variable max
+in the pattern
+-The syntax of if let takes a pattern and an expression separated by an equal sign
+The pattern is Some(max)  and the max binds to the value inside the Some
+-max can be used in the body of if let
+The code in the if let block only runs if the value matches the pattern
+The block of code that goes with _ case in the match expression is equivalent to the if let and else
+
+
+If let Syntax
+if let Pattern(binding) = value {
+    // Code to execute when pattern matches
+} else {
+    // Optional: fallback code when pattern doesn't match
+}
+
+- Pattern(binding): The pattern you're trying to match (e.g., Enum::Variant(data)).
+- value: The value being matched.
+- binding: The variable bound from the pattern.
+- Inside the block, you can use binding directly.
+
+let Pattern(binding) = value else {
+    // Early exit or fallback logic
+    return fallback_value;
+};
+
+// Continue using `binding` here
+
+
+
+Let Else
+-Rust has let..else syntax which  takes a pattern on the left size and an expression on the right
+It does not have an if branch only an else branch. If the pattern matches, it will bind the value from the pattern
+in the outer scope. If the pattern does not match, the program flows into the else branch, which must return from the function
+
+General Syntax
+fn function_name(input: InputType) -> Option<ReturnType> {
+    let Pattern(binding) = input else {
+        return None;
+    };
+
+    if condition_on(binding) {
+        Some(format!("{} meets condition", binding))
+    } else {
+        Some(format!("{} does not meet condition", binding))
+    }
+}
+

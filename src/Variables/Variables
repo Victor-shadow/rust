@@ -1,0 +1,80 @@
+-A variable is a memory location/container for storing values of data
+Variables in Rust are immutable by default, the value of a particular variable cannot be changed once a variable
+is assigned that value
+-Variables are declared using 'let' keyword
+-The Scope of a variable is defined by the block of the code in which it is declared
+A Scope is the range within the program for which a variable is valid
+-A variable can be used only if it has been initialized
+
+Features of Variables
+-The Name of a Variable can be composed of letters, digits, numbers and underscore characters
+-A variable must begin with either a letter or an underscore(unused variable)
+-Variables in Rust are associated with a specific data type. The Data type determines the size and layout of the variable's
+memory and the set of operations that can be performed on the variable
+
+NOTE:*Rust uses '{}' as a placeholder in println!() to show the values of the variables
+
+
+Syntax:
+*let variable_name = value; //data type not specified
+*let variable_name: DataType = value; //data type specified
+
+The data type is optional when declaring a variable in Rust
+It is inferred from the value assigned to a variable
+
+
+Mutable Variables
+-Since variables are immutable by default, to make a variable mutable the 'mut' keyword is used
+Syntax:
+let mut variable_name = value;
+let mut variable_name: dataType = value;
+
+Constants
+-Like immutable variables, constants are values that are bound to a name of a variable and they are not allowed
+to change
+-mut keyword cannot be used with constants
+Constants are immutable by default
+-Constants are declared using the const keyword and the type of value of the variable must be annotated
+They can be declared in any scope, including the global scope
+-The Constants must only be set to constant expressions and not the result of a value that can be computed
+at run time
+-The Naming Convention for Constants in Rust is that:
+*Letters should be in upper case
+*Constants must be explicitly typed
+*Underscores between words
+*Syntax: const VARIABLE_NAME: dataType = value;
+
+
+Shadowing of Variables(Overriding of variables)
+-Shadowing allows a variable to be redeclared in the same scope with the same name
+-The first variable name is shadowed by the second variable name in Rust
+
+*Example
+fn main(){
+  let program = "Rust";
+  let program = "Scala";
+  //reads the first program
+  println!("The value of the salary is :{}", salary);
+}
+//the second variable shadows or hides the first variable and hence its output is displayed
+Rust supports variables with different data types while shadowing
+
+*Example
+fn main(){
+  let language = "Rust";
+  let language = language.len();
+  println!("name changed to integer : {}", language);
+}
+
+Note: A variable type cannot be mutated
+
+Difference between constants and Variables
+i)Constants are declared using the const keyword while variables are declared using the let keyword
+ii)A variable declared by the let keyword, is by default immutable. However, the variable can be mutated using the mut
+keyword while Constants are immutable
+iii)Constants can be set only to a constant expression and not the result of a function call or any other
+value that can be computed at runtime
+iv)Constants can be declared in any scope, including the global scope
+v)A variable declaration can optionally have a data type whereas a Constant declaration must specify the data
+type
+

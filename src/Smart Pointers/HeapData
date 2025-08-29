@@ -1,0 +1,86 @@
+Using Box<T> to Point to Data on the heap
+=Rust allocates everything on the stack by default
+=The most straightforward smart pointer is a box., whose type  is written Box<T>
+The box allows one to store data on the heap rather on the stack. What remains on the stack is the pointer to the
+heap data
+=Boxes do not have performance overhead, other than storing their data on the heap instead on their
+stack
+=Boxes are used in the following situations
+i)When one has a type  whose size can't be known at compile time and one wants to use a value of that type
+in a context that requires the exact size
+ii)When one has a large amount of data and one wants to transfer ownership but ensure the data won't copied
+iii)When one wants to own a value that implements  a particular trait rather than  being of a specific type
+
+NOTE: Transferring ownership of large amount of data can take a long time because data is copied around on the
+stack, To improve performance, one can store the large amount of data on the heap in a box
+Then only the small amount of pointer data is copied around on the stack, while the data it references stays on  one place on
+the heap
+
+
+Using Box<T> to store data on the Heap
+*fn main(){
+ let b = Box::new(10);
+ println!("b = {b}");
+}
+
+-We define the variable b to have the value of a Box that points to a value of 10, which is allocated on the heap
+The program prints b = 10, In this case, data can be accessed in the box similarly to if the data is on the stack
+Just like any owned value, when a box goes out of scope, as b does at the end of the main fn  it will be deallocated
+The deallocation happens for both the box(stored on the stack) and the data it points to(stored on the heap)
+
+Recursive Types with Boxes
+-A value of the recursive type can have another value of the same type as part of itself
+Recursive types pose an issue in Rust because Rust needs to know at compile time how much space a type takes up
+Nesting of values of recursive types could theoretically continue to infinity, so Rust can't know how much space
+the value needs
+Because boxes have a known size, we can enable recursive types by inserting a box in the recursive type definition
+
+Use of Boxes to define recursive data types
+//enum definition for a cons list
+enum List {
+  Cons(i32, List),
+  Nil,
+}
+//use the List type to store the list 1, 2, 3
+use crate::List::{Cons, Nils};
+
+fn main(){
+ let list = Cons(1, Cons(2, Cons(3, Nil)));
+ }
+
+//the first Cons value holds 1 and another List value. The List value is another Cons value that holds 2 and another List value
+The List Value is one more Cons value that holds 3 and a List Value, which is finally Nil, the non recursive variant that signifies the
+end of the list
+-This type has an infinite size, List has been defined with a variant that is recursive, it holds another value of itself directly
+Rust cannot figure out how much space it needs to store a List value
+
+-The compiler starts looking at the Cons variant, which holds a value of i32 and a value of List, Therefore,
+Cons needs an amount of space equal to the size of an i32 plus the List size //this process continues infinitely
+
+To break the cycle, indirection can be used
+-Indirection means that instead of storing values directly, the data structure should be changed to store the value indirectly
+by storing a pointer to the value instead
+Because a Box<T> is a pointer, Rust always knows how much space a Box<T> needs
+A pointer's size does not change based on the amount of data it points to
+One can put Box<T> inside the Cons variant instead of another List value directly
+The Box<T> will point to the next List value that will be on the heap rather than inside the cons
+variant
+
+enum List {
+ Cons(i32, Box<List>),
+ Nil,
+}
+use crate::List::{Cons, Nil};
+
+fn main(){
+ let list = Cons(1, Box::new(Cons(2, Box::new(Cons(3, Box::new(Nil))))));
+}
+The Cons variant needs the size of a i32 plus the space to store the Box pointer data
+The Nil variant stores no values. so it needs less space than Cons variant
+By using a Box the recursive infinite chain is broken
+Note: Any List value will take up the size of an i32 plus the siz of the box pointer data
+NOTE:Boxes provide only the indirection and heap allocation
+The Box<T> type is a smart pointer because it implements the Deref trait, which allows Box<T>
+values to be treated as references
+When a Box<T> value goes out of scope, the heap data that the box is pointing to is cleaned up as well
+because of the Drop trait implementation

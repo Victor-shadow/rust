@@ -1,0 +1,288 @@
+=The Result enum is defined as having two variants:
+I)OK variant
+II)Err variant
+
+enum Result<T, E>{
+Ok(T)
+Err(E)
+}
+
+=The T and E are generic type parameters; T represents the type of value  that will be returned in a success case
+within the OK variant
+E represents the type of error  that will be returned ina failure case within the Err variant
+
+Since Result has this generic parameter type, one can use the Result types and the functions defined on it
+
+A function that Returns Result Value
+use std::fs::File;
+fn main(){
+  let file_result = File::open("Rust.txt");
+}
+
+The Return type of File::open is a Result <T,E>, The generic parameter T has been filled in  by the implementation of  File::open
+with the type of success value, std::fs::File which is a file handle
+The type E is used in Error value is std::io::Error, This return types means the call to File::open might succeed and return a file handle
+that can be read or written to
+The function call might fail, the file might not exist, and one might not have permissions to access the file, The File::Open function needs to have a way to
+indicate whether it succeeded or failed and at the same time gives either the file handle or error handle
+The Result enum  conveys this information
+
+In the case where File::open succeeds, the value in the variable file_result will be an instance of Ok that contains a file handle
+where it fails, the value in file_result wil be an instance of Err that contains the information  about the kind of error that occurred
+
+Function
+use std::fs::File;
+
+fn main(){
+   let file_result = File::open("rust.txt");
+
+   let output_file = match file_result {
+   OK(file) => file,
+   Err(error) => panic!("problem opening the file: {error:?}"),
+   };
+ }
+ Note, that like the Option enum, the Result enum and its variants have been brought into scope
+ by the prelude, so the Result:: does not need to be specified before Ok and Err variants in the match {
+ }
+ When the result is Ok, the code returns the inner file value out of the Ok variant, and then assign that file handles values
+ to the variable file_result. After the match, the file handle can be used for reading and writing
+
+ The other part of match handles the case where there is Err value from File::open, In this case the panic! macro is called
+,if there is no file named "rust.txt" an error is displayed
+
+Matching on different errors
+use std::fs::File;
+use std::io::ErrorKind;
+
+fn main(){
+   let file_result = File::open("rust.txt");
+
+   let output_file = match file_result {
+      Ok(file) => file,
+      Err(error) => match error.kind(){
+         ErrorKind::NotFound => match File::create("c++.txt"); {
+           Ok(fc) => fc,
+           Err(e) => panic!("Problem creating the file: {error:?}"),
+           },
+         _=> {
+         panic!("Problem opening the file: {error:?}"),
+         }
+     },
+   };
+}
+
+-The type of the value that File::open returns inside the Err variant is io::Error, which is a Struct provided by the
+standard library
+-This struct has a method kind that one can call to get  an io::ErrorKind value,  The enum io::ErrorKind is provided by the standard library
+and has variants representing different kinds of errors  that might result from an io operation
+The variant to be used ErrorKind::NotFound, which indicates that the file to be opened does not exist yet
+So, we match file_result , but also there is an inner match on error.kind()
+=The condition to be checked in the inner match is whether the value returned by error.kind() is in NotFound variant in the
+ErrorKind enum
+=If it is, we try to create the file with File::create
+=However, because File::create could also fail, a second arm in the inner match expression is needed
+When the file cannot be created a different error message is displayed
+The second arm of the outer match remains the same, so the program panics on any error besides the missing file error
+
+
+Use of Closures and unwrap_or_else Logic
+use std::fs::File;
+use std::io::ErrorKind;
+
+fn main(){
+    let file_result = File::open("file.txt").unwrap_or_else(|error| {
+       if error.kind() == ErrorKind::NotFound {
+          File::create("file.txt").unwrap_or_else(|error| {
+            panic!("Problem creating the file: {error:?});
+            })
+        } else {
+        panic!("Problem opening the file {error:?}") ;
+        }
+        });
+      }
+
+
+Unwrap and Expect
+=The unwrap method is a shortcut method implemented just like the match expression, If the Result value is the Ok variant, unwrap will return
+the value inside the Ok, If the Result is the Err variant, unwrap calls the panic! macro
+
+use std::fs::File;
+
+fn main(){
+   let result_file = File::open("file.txt").unwrap();
+}
+If the code is run without the file.txt file there is an error message from the panic macro! call the unwrap method makes
+Similarly the except method lets one choose the panic error message
+
+Syntax of expect
+use std::fs::File;
+
+fn main(){
+   let result_file = File::open("file.txt").expect("file.txt should be included");
+}
+
+We use expect the same way as unwrap: to return the file handle or call the panic! macro
+The error message used by expect in its call to panic! will be the parameter that is passed to expect, rather than the default panic
+message that unwrap uses
+
+Propagating the Errors
+=When a function implementation calls something that might fail,  instead of handling the error within the function itself
+you can return the error to the calling code so that it can decide what action to perform
+=This is known as propagating the error and gives more control to the calling code, where there might be more information
+or logic that dictates how the error should be handled than what you have available as the context of the code
+
+
+use std::fs::File;
+use std::io::{Self, Read};
+
+fn read_username() -> Result<String, io::Error> {
+   let username_file_result = File::open("file.txt");
+
+   let mut username_file = match username_file_result {
+   Ok(file) => file,
+   Err(e) => return Err(e);
+   };
+
+let mut username = String::new();
+
+match username_file.read_to_string(&mut username){
+ Ok(_) => Ok(Username),
+ Err(e) => Err(e),
+ }
+}
+
+//The Return type of the function is Result<String, io::Error>: The function is returning a value of the type Result<T, E> where the
+generic parameter T has been filled with the concrete type String, and the generic type E has been filled with the concrete type
+io::Error
+-If the function succeeds without problems, the code that calls the function will receive an Ok value that holds the String, the username
+that the function read from the file
+If this function encounters any problems, the calling code will receive an Error value that holds an instance of io::Error that contains
+more information about what the problems are
+io::Error is chosen as the return type of the function because that happens to be the type of error
+value returned from both operations we call in the function body that might fail; the File::Open function
+and the read_to_string method
+The body of the function starts by calling the File::open function, Then the Result value is handled with a much similar match
+
+If File::open succeeds, the file handle in the pattern variable file becomes the value in the mutable variable username_file
+and the function continues, In the Err case, instead of calling panic! we use the return keyword to return early out of the function entirely
+and pass the Error value from File::open now in the pattern variable e , back to the calling code as this function error value
+
+So if there is a file handle in username_file, the function then creates a new String in variable
+username and calls the read_to_string method on the file handle in username_file to read the contents of the file
+into username. The read_to_string method also Returns a Result because it might fail even though File::open succeeded. So another match is needed
+to handle that Result: If read_to_string succeeds , then the function also succeeds, and the username from the file is returned
+that is now wrapped in Ok
+If read-to_string fails,  we return the error value , However one does not need to use the return keyword explicitly
+because it is the last expression in the function
+
+The code that calls this code will handle getting either an Ok value that contains a username or an Err value
+that contains an io::Error
+If the calling code calls an Err value, it could call panic! and crash the program, use a default username or  look up the username
+from somewhere other than a file
+
+Propagating errors using the ? operator
+use std::fs::File;
+use std::io::{self, Read}
+
+fn read_username_from_file() -> Result<String, io::Error> {
+  let mut username_file = File::open("program.txt");
+  let mut username = String::new();
+  username_file.read_to_string(&mut username) ?;
+  Ok(username)
+}
+
+-The ? placed after a Result value, is defined to work almost in the same way as match expressions
+If the value of the result is an OK , the value inside the Ok , will get returned from the expression
+and the program continues
+-If the value is an Err,  the Err will be returned,  from the whole function as if we had used the return keyword, so the error value
+gets propagated to the calling code
+-error values that have the ? operator called on them, go through  the from function, defined in the From trait
+in the standard library, which is used to convert the values from one type to another
+When the ? operator calls the from function, the error type received is converted into the error type  defined in the
+return type of the current function
+This is useful when the function returns one error type to represent all the ways a function might fail
+NOTE: the ? operator at the end of the File::open call will return the value inside an Ok to the variable username_file
+If an error occurs ? operator, will return early out of the whole function and give any Err value to the calling code, The same applies
+to the end of the read_to_string call
+NOTE: One could change the read_username_from_file  function  to return a custom error type
+OurError user defined
+If one also defines  impl From<io::Error> for the OurError to construct an instance of OurError from the io::Error then the ? operator
+calls  in the body of the read_username_from_file will call from and convert the error types
+
+
+use std::fs::File
+use std::io::{self,  Read};
+
+fn read_username_from_file() -> Result<String, io::Error> {
+   let mut username = String::new();
+
+   File::open("user.txt")?.read_to_string(&mut username)?;
+
+   Ok(username)
+}
+
+//The call is chained directly to read_to_string directly onto the result of File::open("file.txt")?.
+we still return an Ok value containing the username when both File::open and read_to_string succeeds rather than returning
+errors
+NOTE: The standard library provides the convenient fs::read_to_string function that opens a file, creates a new String
+reads the contents of the file, puts the contents into the String, and returns it
+NOTE: The ? Operator can only be used in functions whose return type is compatible with the value the ? is used on
+This is because the ? operator is defined to perform an early return of the value out of  the function
+
+A function with a return type that is incompatible  with the type of value we use ? on
+use std::fs::File;
+fn main(){
+ let file = File::open("file.txt")?;
+ }
+
+ -This code opens a file, which might fail. The ? operator follows the Result value returned by File::open
+ but the main fn has the return type of (), not Result
+ -One is only allowed to use the ? operator in a function that Returns Result, Option
+ or another type that implements FromResidual
+ One can also use ? on Option in a function that Returns an Option
+ The behaviour of the ? operator, when called on Option<T> is similar to the behaviour when called on
+ Result<T>
+ If the value is None, then None will be returned early from the function at that point
+ If the value is Some, the value inside Some is the resultant value of the expression, and the function resumes
+
+ fn last_char_of_the_first_line(text: &str) -> Option<char> {
+ text.lines().next().?.chars().last();
+}
+The function returns Option<char> because it is possible that there is a character there , but it is also possible that there isn't
+The code takes the text string slice as its argument and calls the line method on it, which returns an iterator
+over the lines in the string, Since the function examines the first line, it calls next on the iterator to get the first value from the
+iterator,If text is the empty string, this call to the next will return None, in which case use the ? operator  to stop and return None
+from the last_char_of_the_first_line. If the text is not an empty string
+next returns a Some value containing the string slice of the first line in text
+The ? extracts the string slice, and one can call chars on the string slice to get an iterator of its characters
+we also call last to return the last item in the iterator. This is an Option because  it is possible that the first line is the empty string
+
+However, if there is a last character on the first line, it will be returned in the Some variant
+NOTE: One can use the ? operator on a Result in a function that returns Result, and one can use the ? operator on an Option
+in a function that returns the Option
+The ? operator won't automatically convert a Result to an Option, in such cases use
+methods like the ok on Result or the ok_or method in Option to do conversion explicitly
+
+use std::error::Error;
+use std::fs::File;
+
+fn main() -> Result<(), Box<dyn Error>> {
+let file_output = File::open("text.txt")?;
+
+Ok(())
+}
+
+Box<dyn Error> means "any kind of error"
+Using ? on a Result value in the main fn with Error type Box<dyn Error> is allowed because it
+allows any Err value to be returned Early
+Even though the body of this main function will only ever return errors of the type std::io::Error, by specifying
+Box<dyn Error>, this signature continues to be correct even if there is code that returns other errors is added
+
+When a main fn, returns a Result<(), E> the executable will exit with a value of zero. If main returns Ok(())
+and it exits with a non zero value if main returns Err value
+NOTE: The main fn may return any types that implement the std::process::Termination trait,
+which contains the fn report that returns an Exit code
+
+
+
+

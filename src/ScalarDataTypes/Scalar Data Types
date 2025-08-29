@@ -1,0 +1,147 @@
+-Rust is a statically typed programming language. Every value in Rust is of a certain Data Type
+The compiler can automatically infer the data type  of the variable based on the value assigned to it
+*let <var> = <value>; //type inferred
+*let <var>: <Type> = <value>; //type explicitly inferred
+-Every value in Rust belongs to  a specific data type
+-A scalar type can store only one type of data
+
+
+
+Scalar Types
+A scalar type represents a Single value
+-Rust has four primary scalar types:
+i)Integer
+ii)Floating-point
+iii)Boolean
+iv)Character
+
+------------------------------------------------------------------------------------------------------------------------
+A)Integer
+-An Integer is a number without a fractional component
+It is used to represent whole numbers
+Integers can be further classified as Signed or Unsigned
+Signed Integers(i) can only store positive and negative values while unsigned integers(u) can only store positive values
+-
+Size/Length                    Signed                            Unsigned
+ 8 bit                         i8                               u8
+ 16 bit                        i16                              u16
+ 32 bit                        i32                              u32
+ 64 bit                        i64                              u64
+ 128 bit                       i128                             u128
+ Arch(architecture dependent)  size                             usize
+
+
+The Size of an integer can be arch. This means the size of the data type will be derived from the architecture of the machine
+
+-An integer will be of size 32 bit on a x86 machine and a 64 bit on a x64 machine
+
+Syntax template:
+let <var>: i32 = <value>; //signed 32 bit integer
+let <var>: usize = <value>; //unsigned arch-sized
+
+-Each variant can be either signed or unsigned and has an explicit size
+-Signed variants can store numbers from −(2(n) − 1) to 2(n) − 1 − 1 inclusive where n is the number of bits the variant
+uses
+*i8 stores numbers = −(2(7)) to 2(7) − 1 = -128 to 127
+
+-Unsigned variants can store numbers from 0 to 2(n) - 1
+*u8 stores numbers from 0 to 2(8) - 1, = 0 to 255
+
+------------------------------------------------------------------------------------------------------------------------
+Integer Literals in Rust
+Number Literals                                      Example
+Decimal                                              98_222
+Hex                                                  0xff
+Octal                                                0o77
+Binary                                               0b1111_0000
+Byte(u8 only)                                        b'A'
+
+------------------------------------------------------------------------------------------------------------------------
+
+NOTE: An Integer overflow occurs when the value assigned to the Integer variable exceeds the Rust defined range for the
+data type
+
+fn main(){
+  let one: u8 = 255;
+  //0 to 255 is only allowed for u8
+  let two: u8 = 256; //overflow value is 0
+  let three: u8 = 257; //overflow value is 1
+  let four: u8 = 258; //overflow value is 2
+
+  println!("One is: {}", one);
+  println("Two is: {}", two);
+  println("Three is: {}", three);
+  println("Four is: {}", four);
+//The value of an unsigned u8 variable is 0 to 255
+}
+
+NOTE: A visual separator '_' is used to separate digits of large numbers:
+fn main(){
+  let float_value = 10_000.000_000;
+  println!("Float value is: {}", float_value);
+
+  let int_value = 20_000;
+  println!("Int value is: {}", int_value);
+}
+
+
+
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Float
+-Rust also has two primitive types for floating-point numbers, which are numbers with decimal points
+-Float data type in Rust can be classified as f32 and f64 which are 32 bits and 64bits in size
+-The f32 type is a single precision type, and f64 has a double precision
+The default type is f64
+-All floating-point types are signed
+-Float represents numbers with fractional components
+-Follows the IEEE-754 standard
+
+Type                             Precision                              Syntax
+f32                              Single                                 let<var>:f32 = <value>;
+f64                              Double                                 let<var>:f64 = <value>;
+
+*use f32 for performance sensitive applications
+------------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------------
+Boolean Type
+-Represent true values or false
+-Use the bool keyword to declare a variable
+-Booleans are one byte in size
+Type                                       Syntax
+bool                                       let<var>:bool = <value>;
+
+Used in control flow
+No implicit conversion from integers
+------------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------------
+Character Type
+-The Rust's char type is the language most primitive alphabetic type
+-The character data type in Rust supports numbers, alphabets, unicode and special characters
+Use the char keyword to declare a variable of character data type
+Rust char type represents a Unicode Scalar Value, which means it can represent more than ASCII values
+-Unicode scalar Values range from U + 0000 to U +  D7FF and U+E0000 to U + 10FFFF inclusive
+-Char literals are specified in single quotes, as opposed to String literals which use double quotes
+-Rust's char type is four bytes in size and Represents a Unicode-scalar value
+-Accented letters: (Chinese, Japanese, Korean) emoji, zero-width spaces are all valid char values in Rust
+*let <var>:char = '<char>';
+
+-----------------------------------------------------------------------------------------------------------------------
+
+NOTE: Automatic Type Casting is not allowed in Rust
+i.e An integer value assigned to a float throws a mismatched type error by the compiler
+
+Code: fn main(){
+    let output:f32 = 100; //integer assigned to a float value
+    println!("Output is: {}", output);
+}
+
+
+
+
+

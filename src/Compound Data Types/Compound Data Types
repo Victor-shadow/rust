@@ -1,0 +1,94 @@
+-Compound Data Types can group multiple values into one type
+Rust has two primitive compound types: tuples and arrays
+
+------------------------------------------------------------------------------------------------------------------------
+i)Tuple Type
+-A tuple is a general way of grouping together a number of values with a variety of types
+into a compound type
+
+Syntax:
+//1:
+let tuple_name:(data_type1, data_type2, data_type3) = (value1, value2, value3);
+//2
+let tuple_name = (value1, value2, value3);
+
+Access elements in a tuple:
+fn main(){
+let tuple: (i32, f64, u8) = (1000, 2000.0, 2);
+-println!("{?:}", tuple);
+}
+-Since tuple is a compound type , the syntax used is that of println!("{:?}", tuple);
+
+
+Features of tuples
+i)Tuples have a fixed length
+ii)Once declared, they cannot grow or shrink in size
+
+*Tuples are created by writing a comma separated list of values inside a parentheses
+Each position in the tuple has a type, and the types of different values in the tuple do not
+have to be the same
+A tuple is considered a single compound element
+To get individual values out of a tuple, use pattern matching to destructure a tuple value
+
+*Tuple elements can be accessed through
+i)destructuring - unpack of values in a tuple
+*let tup = (100.0, "Rust", 200);
+*let display(x, y, z) = tup; //destructuring
+*println!("The values of x, y  and z is {}, {}, {}", x, y, z)
+
+ii)use of period(.)
+*let tup(i32; f64; u8) = (100, 200.0, 300);
+*let display = tup.0;
+*let output = tup.1;
+*let final = tup.2;
+*println!("The value of display is {}", display);
+*println!("The value of output is {}", output);
+*println!("The value of final is {}", final);
+
+-A tuple without any value has a special name unit
+This value and its corresponding type are both written () and represent  an empty value or an
+empty return type
+Expressions implicitly return the unit if they do not return any other value
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------------
+Array Type
+-An array is a homogenous collection of values(a collection of multiple values/elements of the same data type)
+-Arrays in Rust have a fixed length
+Values in an array are a comma separated list
+-Arrays in Rust are useful when data is allocated on the Stack rather than the heap
+and are used when the number of elements in the array do not change
+
+i.e names of months in a program
+fn main(){
+let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+}
+
+Writing an array type using square brackets with the type of each element, a semicolon, and then the number of elements
+in the array
+
+fn main(){
+let arr: [i32; 5] = [1, 2, 3, 4, 5];
+i32; is the type of each element in the array
+After the semi-colon the number 5 indicates the number of elements stored in the array
+
+//one can initialize an array to contain the same value for each element by specifying the initial value, followed by a semicolon
+and then the length of the array in square brackets
+let b = [3; 5];
+*thus  let b = [3, 3, 3, 3, 3];
+
+}
+
+Access Array Elements
+An array is a single chunk of memory of a known, fixed size that can be allocated on a stack
+
+fn main(){
+  let a = [10, 20, 30, 40, 50];
+
+  let first = a[0]; //this variable retrieves the value 10 from the array
+  let second = a[1]; //the variable retrieves the value 20 from the array
+}
+
+

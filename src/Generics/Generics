@@ -1,0 +1,134 @@
+-Generics refer to the parameterization of data types and traits
+It can be applied  to methods, functions, structures, enumeration, collection and
+Traits
+-The <T> syntax known as a Type parameter, is used to declare a generic construct
+T represents any data type
+
+In Function Definitions
+-When defining functions that uses Generics, we place the generics in the signature of the function
+where the data type of the parameters and the return values is usually specified
+-This makes the code more flexible and provides more functionality to the caller of the function
+preventing code duplication
+-To parameterize the type in a new single function, one needs to name the type parameter
+Any identifier can be used as a Type parameter name
+-T is used by convention since type Parameter names in Rust are short, often just one letter
+Rust type-naming convention is CamelCase
+-When a parameter in the body of the function is used, one has to declare the parameter name in the function signature
+so as to make the compiler to understand the meaning of the name
+Similarly, when a type parameter name is used in a function signature, one can declare the type parameter name before in use
+-Type name declarations are placed inside <> brackets between the name of the function and the
+parameter list
+-Note: Using one generic type only defines one data type to be used
+
+Generics in Structs
+-The syntax for using generics in Structs is similar to that used in function definitions
+-Declare the name of the type of parameter inside angle brackets just after the name of the Struct
+Then use the generic type in the Struct definition
+-If one generic type is defined, then the fields must be of the same data type
+General Syntax
+// Define a struct with two generic type parameters
+struct StructName<TypeA, TypeB> {
+    field_one: TypeA,
+    field_two: TypeB,
+}
+StructName; Placeholder for struct name
+TypeA, TypeB; Generic Type Parameters
+field_one, field_two: Fields that uses generic types
+
+fn main() {
+    // Instance with both fields using the same type
+    let instance_one = StructName {
+        field_one: value_of_type_A,
+        field_two: value_of_type_A,
+    };
+
+    // Instance with different types for each field
+    let instance_two = StructName {
+        field_one: value_of_type_A,
+        field_two: value_of_type_B,
+    };
+
+    // Printing using Debug formatting
+    println!("{:?}", instance_one);
+    println!("{:?}", instance_two);
+}
+
+Single Generic Types
+struct Wrapper<T> {
+    value: T,
+}
+struct StructName<T: Trait> {
+    field: T,
+}
+
+Generics in Enum Definitions
+-One can define enums to hold generic data types in their variants
+
+Syntax
+enum Option<T> {
+  Some(T),
+  None,
+}
+-The Option<T> enum is generic over type T and has two variants
+Some: which holds one value  of type T
+None: A variant that holds none/ does not hold any value
+-The Option<T> enum expresses the abstract concept  of an optional value
+
+Result Enum
+enum Result<T, E> {
+  Ok(T),
+  Err(E),
+}
+-The Result enum is generic over Two types, T and E  and has two variants  Ok which holds a value of T
+and Err which holds a value of E
+
+Generics in Method Definitions
+-Generic types can used in methods
+Syntax:
+// Define a struct with two generic type parameters
+struct StructName<TypeA, TypeB> {
+    field_one: TypeA,
+    field_two: TypeB,
+}
+
+// Implement methods for the generic struct
+impl<TypeA, TypeB> StructName<TypeA, TypeB> {
+    // Method that returns a reference to field_one
+    fn get_field_one(&self) -> &TypeA {
+        &self.field_one
+    }
+
+    // Method that returns a reference to field_two
+    fn get_field_two(&self) -> &TypeB {
+        &self.field_two
+    }
+
+    // You can also add methods with constraints:
+    // fn describe(&self) -> String where TypeA: Display, TypeB: Display {
+    //     format!("({}, {})", self.field_one, self.field_two)
+    // }
+}
+
+fn main() {
+    // Create an instance with concrete types
+    let instance = StructName {
+        field_one: value_of_type_A,
+        field_two: value_of_type_B,
+    };
+
+    // Call methods and print results
+    println!("Field one: {:?}", instance.get_field_one());
+    println!("Field two: {:?}", instance.get_field_two());
+}
+
+NOTE:Generic type parameters in a struct definition aren't the same as the ones used  in struct
+method signatures
+
+Performance of Code using Generics
+-Rust performs monomorphization of code using generics at compile time
+-Monomorphization is the process of turning generic code into specific code by filling in the concrete types
+that are used when compiled
+-The compiler looks at all the places where generic code is used and generates code for the concrete types
+the generic code is called with
+
+

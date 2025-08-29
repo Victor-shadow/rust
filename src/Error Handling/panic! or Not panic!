@@ -1,0 +1,134 @@
+=In rust errors are classified into two major categories
+
+Name of Error     Description                       Usage
+i)Recoverable      - Errors which can be handled    -  Result enum
+
+ii)Unrecoverable   -Errors which cannot be handled  - panic macro
+
+A recoverable error is one which can be corrected. A program can retry the failed operation
+or specify an alternate action when it encounters a recoverable error. Recoverable errors do not cause a program to fail
+abruptly
+Example: FileNotFoundError
+
+Unrecoverable Errors cause a program to fail abruptly. A program cannot revert to its normal state if an unrecoverable error
+occurs. It cannot retry a failed operation or undo the error
+Example: access to a location beyond the end of an array
+Rust returns enum Result<T, E> for recoverable errors while it calls the panic! macro if a program
+encounters an unrecoverable error. The panic macro causes the program to exit abruptly
+
+Result Enum and Recoverable Errors
+Enum Result <T, E>  can be used to handle recoverable errors. It has two variants  -OK and Err
+T and E are generic type parameters. T represents the type of value that can be returned in a success case within the OK Variant
+and E represents the type of Error that will be returned in a failure case within the Err variant
+Syntax:
+enum Result<T, E> {
+Ok(T),
+Err(E)
+}
+
+Unwrap and Expect
+The standard library contains helper methods that both enums Result<T, E> and Option<T> implement
+They can be used to simplify error cases where operations are not expected to fail. In case of success from a method the
+"unwrap" function is used to extract the actual result
+
+i)unwrap(self): T =Expects self to be OK/Some and returns the value contained within. If it is Err or None
+instead, it raises a panic with the contents of the error displayed
+
+ii)expect(self, msg: &str): T - Behaves like unwrap, except that it outputs a custom message before panicking in addition to the
+contents of the error
+
+NOTE: The unwrap function returns the actual result an operation succeeds. It returns a panic with a default error message if an operation
+fails
+
+expect: displays a custom error message in case of a panic
+
+
+
+=When code panics there is no way to recover(unrecoverable)
+=If one chooses to return Result value, the calling code is given options
+The calling code could choose to attempt to recover in a way that is appropriate for its situation
+or it can decide  that the Err value in that case is unrecoverable, so it can call panic and turn the recoverable
+error into an unrecoverable error
+=Returning Result is a default choice when defining a function that is bound to fail
+=In situations such as examples, prototype codes and tests it is more appropriate to write code that
+panics instead of Returning a Result
+
+Examples, Prototype Code, and Tests
+=The unwrap and expect method are common in prototyping; before one is ready to decide  how to handle errors
+They leave clear markers in a code for when the program may become more robust
+Similarly in a test, if a method call fails on a test, it is expected that the whole test should fail, even if the method
+is not the functionality under the test
+Since panic! is how test is marked as a failure, calling unwrap or expect is what should happen
+
+Cases where one has more information more than the compiler
+=It is also appropriate to call expect when one has some logic that ensures that the Result will have an ok value
+but the logic is not understood by the compiler. You will still have a result value that needs to be handled
+whatever operation you are calling still has the possibility of failing in general, even though it is logically
+impossible in that particular situation
+If one can ensure by manually inspecting the code that one will never have an Err variant, it is perfectly acceptable to call
+the expect and document the reason you think you will never have an Err variant in the argument text
+
+use std::net::IpAddr;
+
+let home: IpAddr = "127.0.0.1"
+.parse()
+.expect("Hardcoded IP addresses should be valid");
+
+-We are creating an IpAddress instance by parsing a hardcoded string, "127.0.0.1" is a valid IPAddress
+so expect can be used here
+However, having a hardcoded, valid string does not change the return type of the parse method we still get a Result value, and
+the compiler will still make one handle the Result as if the Err variant is a possibility
+since the compiler is not smart enough to see that the string is a valid IPAddress. If the IPAddress string came from a user rather than
+being hardcoded into the program and therefore did have a possibility of failure, we definitely want to handle the Result in a robust way
+
+
+Guidelines for Error Handling
+=It is advisable to have code panic when it is possible  that code could end up in a Bad state
+A bad state is when some assumption, guarantee, contract, invariant has been broken, such as when invalid values, contradictory value
+or missing values are passed to code and:
+I)The bad state is something that is unexpected as opposed to something that will likely happen occasionally, like a user
+entering data in the wrong format
+II)Code after this point needs to rely on not being in this bad state, rather than checking the problem at every step
+=Panic is often appropriate if one is calling external code that is out of control and returns an  invalid state
+that has no way of fix
+=When failure is expected, it is more appropriate to return a Result, than to make a panic
+* a parser being given malformed data or an HTTP request returning a status that indicates you have hit a rate limit
+=When a code performs an operation that can put a user at risk if it is called using invalid values, your code should verify the values
+are valid first and panic  if the values aren't valid, This is mostly for safety reasons; attempting to operate on invalid data
+can expose code to vulnerabilities, This is the main reason why the standard library will call panic! if one attempts an out-of-bounds-memory
+access: trying to access memory that does not belong to current data structure
+NOTE: Functions often have contracts; their behaviour is only guaranteed if the input meets particular requirements, Panicking when the contract is violated
+indicates a caller-side bug and it is not a kind of error you need the calling code to have to explicitly handle
+
+NOTE: One can use the Rust type system(type checking is done by the compiler), If a function has a particular type as a parameter
+one can continue with the code logic knowing that the compiler has already ensured that valid values are used in the function
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------
+NOTE:
+I)When to use Panic
+a)Unrecoverable errors: Use panic! when a program encounters a situation where it cannot continue safely or meaningfully, These includes violations
+of variants, contracts or assumptions that are critical to the program logic
+
+b)Examples and Prototyping: In examples, prototype code , or tests panic(often via unwrap() or expect()) is acceptable for simplicity
+It serves as a placeholder for more robust error handling and clearly marks points where errors need future attention
+
+c)Safety and Security: Panic when invalid inputs could lead to security vulnerabilities or unsafe behaviour(out-of-bounds memory access)
+The standard library often panics in such cases preventing undefined behaviour
+
+d)Compiler Limitations: When one as a programmer knows logically that an error cannot occur(e.g parsing a hardcoded valid IP Address) but the compiler cannot
+verify it, expect() with a descriptive message is appropriate
+
+II)When to use Result
+a)Recoverable Errors: Return Result when failures are expected and the caller should have the flexibility to handle them, This is the default choice for
+fallible fn,as it empowers the caller to decide whether to recover, retry or propagate the error
+
+b)Library Code: Libraries should generally return Result to avoid imposing error handling strategies on users. this allows callers to handle errors in a suitable
+context
+
+c)Expected failures: For operations where failure is a possibility(parsing user input, network requests, rate limit) Result is ideal
+It encodes the possibility of failure in the type system, make it explicit and mandatory to handle
+
+NOTE: The panic! macro signifies that the program is in a state that it cannot handle and lets one to tell a process to stop instead of trying to proceed
+with values which are invalid or incorrect
+The result enum uses Rust type system to indicate that operations might fail in a way that code could recover from
+One can use Result to tell code that calls your code that it needs to handle potential success or failure as well

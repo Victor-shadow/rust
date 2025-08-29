@@ -1,0 +1,158 @@
+-It is a set of rules that governs how a Rust program manages memory
+-Rust memory is managed through a system of ownership with a set of rules that the compiler checks
+If any of the rules are violated the program does not compile. This enables memory management in rust without the use of
+a garbage collector
+-The stack and the heap are parts of memory available to code to use at runtime but they are
+structured in different ways
+
+The Rules of Ownership in Rust
+I)Each value in Rust has a variable called Owner
+II)There can only be one owner at a time
+III)When an owner goes out of scope, the value is dropped(Rust compiler internally calls the drop function)
+
+Memory: Stack Vrs Heap
+STACK
+-The stack stores values in the Order in which it gets them and then removes the values in the
+Opposite order(Last-In-Fast-Out) principal
+Adding data to a stack is referred to as pushing data to the Stack and Removing data from the stack is referred to as
+popping off the stack
+-All data stored on the stack must have a known fixed size : (implemented by mostly scalar data types)
+Data with an unknown size at compile time or a size that might change must be stored on the heap instead
+
+HEAP(Mostly in compound data types)
+The heap is less organized: When data is put on the heap a certain amount of space is requested
+The memory allocator finds an empty spot in the heap that is big enough, marks it as being used and returns a pointer
+to that location(address of the location). This process is called allocating on the heap
+NOTE: Pushing values on the stack is not allocating data
+Because the pointer to the heap is a known, fixed size pointers can be stored on the stack
+When actual data is needed the pointer has to be followed
+NOTE: A pointer is a variable that stores a memory address - location of a value in memory whether that value is on a heap
+or stack
+
+Pushing to the stack is faster than allocating data to the heap because the allocator never searches
+for a place to store the data; the location is always on top of the stack
+NOTE: For one to access data on the heap one has to follow the pointer
+When code calls a function, the values passed in the function(include, potentially pointers to data on the heap) and
+the function local variables get pushed on the stack
+When the call to the function is over, the values get popped off the stack
+
+
+Ownership Variable Scope
+-A scope is the range within a program for which an item is valid
+
+Example:
+fn main(){ //variable is not valid here since it is not yet declared
+    let variable = "Rust"; //variable is valid from this point going forward(the variable refers to a string literal where the value of the String is hardcoded into text)
+    //manipulate s
+    println!("variable: {}", variable);
+}//the scope for the variable is now over and that variable is no longer valid
+
+//When variable comes into scope it is valid
+//it remains valid until it goes out of the scope
+NOTE: String literals are immutable
+
+
+Ownership the String Type
+-The Data for the String type(Compound Data Types) is stored and managed on the heap
+With the String type, in order to support a mutable, growable piece of text one needs to allocate an amount
+of memory on the heap, unknown at compile time to hold the contents. This means:
+I)The memory must be requested from the memory allocator at runtime
+II)memory is returned to the allocator once the String operation is complete
+
+fn main(){
+    let s = String::from("Rust"); //s is valid from this point going forward
+    println!("The value of s is {}", s);
+} //the scope of s is now over hence s is no longer valid
+
+NOTE: when s goes out of scope the memory that was used from the String is returned to the memory
+allocator
+When a variable goes out of scope, Rust internally calls the drop() function automatically at the closing curly
+bracket. the author can also put the code to return the memory
+
+------------------------------------------------------------------------------------------------------------------------
+fn main(){
+    let s1 = String::from("Rust");
+    let s2 = s1;  //data pointers point to the same location
+    //Rust invalidates s1
+    //this causes a double free error when s1 and s2 go out of scope since they try to free the same memory
+    //freeing memory twice can lead to memory corruption
+    println!("s1 = {}, s2 = {}", s1, s2);
+}
+
+//A string is made up of three parts:
+a pointer to the memory that holds the contents of the String
+a length - how much memory, in bytes the contents of the String are currently using
+a capacity - the total amount of memory, in bytes that the String has received from the allocator
+-This group of data is stored on the stack
+
+when s1 is assigned to s2, the String data is copied; meaning the pointer, length and the capacity that are on the stack
+//Data on the heap is not copied that the pointer refers to
+
+Note: If Rust copies data from the heap, it is expensive in terms of runtime performance especially if data on the heap is
+large
+Note: when a variable goes out of scope , Rust automatically calls the drop function and cleans up the heap memory for that
+variable
+Note: A move occurs instead of a shallow copy in Rust when the pointer, the length and capacity are copied without
+copying the data that is held by them
+
+Scope and Assignment
+-
+fn main(){
+    let mut s = String::from("hello");
+    s = String::from("world"); //nothing refers to the original value on the heap
+
+    println!("{s}, world!");
+}
+//when a new value is completely assigned to an existing variable, Rust calls drop and free's the original value memory immediately
+
+
+Variables and Data Interacting with clone
+-If one wants a deep copy of data stored in the heap by a String, not just the stack data, one can use the clone() method
+fn main(){
+    let s1 = String::from("Rust");
+    //heap data does get copied
+    let s2 = s1.clone();
+
+    println!("s1 = {}, s2 = {}", s1, s2);
+}
+
+NOTE: Data types such as Integers that have a known size at compile time are stored entirely on the Stack, so copies
+of actual values can be made
+
+Rust has a special annotation called the copy trait that can be used on types that are stored on the stack
+If a type implements the copy trait, variables that use it do not move, but rather are trivially copied, making them still valid
+after assignment to another variable
+Rust does not allow one to annotate a type with Copy. If the type or any of its parts have implemented the
+Drop trait
+Any group of simple scalar values can implement the Copy Trait  and nothing that requires allocation
+or is some form of resource can implement Copy
+
+Types that implement Copy Trait
+All the integer types such as u32
+The Boolean type, bool with values true or false
+All the floating point types such as f64
+The character type char
+Tuples(If they contain types that implement the copy trait) i.e (i32, i32) implements copy
+but (i32, String) does not
+
+Ownerships and Functions
+-Passing values in a function transfers ownership unless it is passed by reference
+The mechanics of passing a value to a function is similar to those of assigning  a value to a
+variable
+Passing a variable to a function will move or copy; just as assignment is done
+
+Return Values and Scopes
+Returning values can also transfer ownership
+-The ownership of a variable follows the same pattern everytime; assigning a value to another variable
+moves it
+When a variable that includes that data on the heap goes out of scope; the value will be cleaned up with the
+drop  unless ownership of the data is moved to another variable
+
+Summary Table
+Ownership                        Each value has a single owner at a time
+Move                             Transfers ownership from one variable to another
+Borrowing(&T)                    Temporarily lets another part of code use a value without
+                                 taking ownership
+Mutable Borrow(&mut T)           Allows modification while still not transferring ownership
+Drop                             When the owner goes out of scope; the value is automatically
+                                 cleaned up

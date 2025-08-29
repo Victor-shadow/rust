@@ -1,0 +1,116 @@
+-Decision making structures require that the programmer specify one or more conditions
+to be evaluated or tested by the program, along with a statement/statements to be executed if the condition
+is determined to be true, and optionally other statements to be executed if the condition
+is determined to be false
+
+------------------------------------------------------------------------------------------------------------------------
+Statement&Description
+if statement               -     An if statement consists of a boolean expression followed by one or more
+                                 statements
+if..else statement         -     An if statement can be followed by an optional else statement, which executes
+                                 when the boolean expression is false
+else...if and nested if    -     One can use if or else if statement inside another if or else if statement(s)
+match statement            -     A match statement allows a variable to be tested against a list of values
+-----------------------------------------------------------------------------------------------------------------------
+
+statement
+Conditional Statements supported by Rust
+1)if statement
+2)else if statement
+3)else statement
+
+
+//General Syntax
+Syntax:
+fn main(){
+ if condition1{
+  //execute if condition one is true
+  statement;
+}
+  else if condition2{
+  //execute if condition two is true
+  statement;
+}
+else {
+  //execute if condition 1 and 2 is false
+  statement;
+  }
+}
+
+
+If Statement
+-The if else construct evaluates a condition before a block of code is executed
+
+Syntax:
+if boolean_expression{
+   //statement(s) will execute if the boolean expression is true
+}
+If the Boolean expression evaluates to true, then the block of code is evaluated
+inside the if statement
+If the expression is false, then the first set of code after the end of if statement(after the closing curly brace)
+will be executed
+-An if expression allows one to branch code depending on conditions. If the condition is met, the block of code is run
+otherwise if it is not met the block of code is not run
+If statement is the first basic condition that needs to be checked, a condition is provided and then the statement
+
+
+If else statement
+-An if block can also be followed with an optional else block statement
+-The else block will execute if the Boolean expression tested by the if statement evaluates to false
+
+Syntax
+if boolean_expression {
+   //statement(s) will be executed if the boolean expression is true
+} else {
+    //statement(s) will be executed if the boolean expression is false
+}
+
+-The if block guards the conditional expression. The block associated with the if statement
+is executed if the Boolean expression evaluates to true
+The if block may be followed by an optional else statement
+
+Nested If Statement
+-The else if ladder is used to test multiple conditions
+
+if boolean_expression1 {
+   //statement if the boolean_expression1 evaluates to true
+} else if boolean_expression2 {
+  //statement if the boolean_expression2 evaluates to true
+} else {
+  //statements if both boolean_expression1 and boolean_expression2 evaluate to false
+}
+
+Note:
+-An if statement can have zero or one else statement and it must come  after any else if statement
+-An if can have zero to many else..if and they must come before the else
+
+Match Statement
+-The Match statement checks if a current value matches from a list of values
+
+Syntax:
+let expressionResult = match variable_expression {
+   constant_expression1 => {
+   //statement
+   },
+   constant_expression2 => {
+   //statement
+   },
+   _ => {
+   //default
+   }
+};
+
+-If let Operator
+-It uses one pattern that needs to be matched to an expression(scrutinee)
+If the pattern matches the expression then the corresponding code is executed, or a value is
+assigned to it
+
+Syntax
+let variable_name = value;
+let variable_two = if let value_1 = expression {
+}
+else if let value_2 = expression {
+}
+...
+else {
+}

@@ -1,0 +1,140 @@
+-A reference is like a pointer in that it's an address one can follow to access data stored in that
+address,that data is owned by some other variable
+-Unlike a pointer, a reference is guaranteed to point to a valid value of a particular type for the life
+of that reference
+-A reference allows access to a value without transferring ownership
+-The opposite of referencing by using & is dereferencing which is accomplished through the use of
+* operator
+-The action of creating a reference is referred to as borrowing
+-References are immutable by default
+-One cannot modify something that is a reference
+
+Example:
+fn main(){
+    let s = String::from("Rust");
+    let len = calculate_length(&s); //the &s creates a reference  that refers to the value of s but does not own it
+    //the value it points to will not be dropped when the reference stops being used
+
+    println!("The length of '{s}' is {len}")
+}
+
+fn calculate_length(s : &String) -> usize{ //s is a reference to String
+    //the signature of the function uses & to indicate the type of the parameter
+    //usize represents a size of memory
+    s.len() //an expression
+
+} //here s goes out of scope, but because s does not have ownership of what it refers to , the String is not dropped
+//& - represent some references to  a particular value without taking ownership
+
+-The scope in which variable s is valid is the same as any function parameter's scope, but the value pointed
+to by the reference  is not dropped when s stops being used, since s does not have ownership
+
+When functions have references as parameters instead of actual values, the values do not need to be returned as there
+is no ownership
+
+Mutable References
+-fn main(){
+     let mut s = String::from("Rust");
+     change(&mut s);
+ }
+
+ fn change(some_string: &mut String){
+     some_string.push_str(" Programming Language");
+     println!("{}", some_string);
+ }
+
+ -The variable s is changed to be mutable. Then a mutable reference &mut s  is created where the change_function is called
+ and the function signature is updated to accept a mutable reference with some_string: &mut String
+ The change function will mutate the value it borrows
+ -Mutable references have one big restriction; if one has a mutable reference to  a value, you can have no other
+ references to that value
+
+ Example:
+ let mut s = String::from("Rust");
+ let r1 = &mut s;
+ let r2 = &mut s;
+
+ println!("{r1}, {r2}");
+//the code is invalid since one cannot borrow s as mutable more than once at a time
+//the first mutable borrow is in r1 and it must be the last until it is used in println!
+
+-The restriction of preventing multiple mutable references to the same data at the same time  allows for mutation
+but in a controlled way
+-The benefit of the restriction is that it prevents race conditions at runtime
+-A race condition is similar to data race and happens when three behaviours occur:
+i)To or more pointers access the same data at the same time
+ii)At least one of the pointers is used to write the data
+iii)There is no mechanism used to synchronize access to the data
+
+-Data races can cause undefined behaviour and can be difficult to diagnose and fix when tracking them at
+runtime
+-Rust refuses to compile code with data races
+
+//curly braces can be used to create a new scope and allow creation of multiple  mutable references
+Example
+let mut s = String::from("Rust");
+{
+  let r1 = &mut s;
+} //r1 ges out of scope here, new references can be made without problems
+
+let r2 = &mut s;
+
+-Rust enforces a similar rule for combining mutable and immutable references
+
+let mut s = String::from("Rust");
+
+let r1 = &s; //no problem
+let r2 = &s; //no problem
+let r3 = &mut s; //BIG problem
+println!("{r1}, {r2}, {r3}");
+
+-Error: cannot borrow 's' as mutable because it is also borrowed  as immutable
+We cannot have a mutable reference while having an immutable one to the same value
+-A reference scope starts from where it is introduced and continues through the last time
+that reference is used
+
+Example:
+fn main(){
+    let mut s = String::from("Rust language");
+    let immutable_reference1 = &s; //no problem
+    let immutable_reference2 = &s; //no problem
+    println!("{immutable_reference1} and {immutable_reference2}");
+    //Variables immutable_reference1 and immutable_reference2 will no longer by valid
+    let mutable_reference = &mut s; //no problem
+    println!("{mutable_reference}")
+}
+//the scopes of the immutable references end after the println!, where they are last used, which is before the mutable
+//reference is created
+//these scopes do not overlap
+
+Dangling References
+-A dangling pointer - it is a pointer that references a location in memory that has been freed, invalidated and is no longer valid(given to something else)
+-In Rust, by contrast, the compiler guarantees that references will never be dangling references
+If one has references to some data, the compiler will ensure that data will not go out of scope before
+the reference to the data does
+
+Example:
+fn main(){
+  let reference_to_nothing = dangle();
+}
+
+fn dangle() -> &String { //dangle returns a reference to a String
+  let s = String::from("Rust"); //s is a new String
+
+ &s //return a reference to the String s
+} //here s goes out of scope and is dropped! so its memory goes away
+error: missing lifetime specifier
+This fn return type contains a borrowed value, but there is no value for it to be borrowed from
+
+The solution is to return the String directly
+Example:
+fn no_dangle() -> String {
+  let s = String::from("Rust");
+
+  s
+}
+//ownership is moved out, nothing is deallocated
+
+Rules of References
+I)At any given time, you can either have one number of mutable reference or any number of immutable reference
+II)References must always be valid

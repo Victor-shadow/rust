@@ -1,0 +1,47 @@
+=In majority of the cases, ownership is clear: one knows which variable owns a given value
+However, there are cases where a single value might have multiple owners
+=To enable multiple ownership in Rust explicitly, use the Rust type Rc<T> which is an abbreviation of
+reference counting. The Rc<T> type keeps track of the number of references to a value to determine whether
+the value is in use or not
+=If there are zero references to a value, the value can be cleaned up without any references becoming invalid
+=The Rc<T> type is used when one wants to allocate some data on the heap for multiple parts of the program to read
+and one cannot determine at compile time which part will finish using the data first
+=Rc<T> is only used for single thread scenarios
+
+Use Rc<T> to Share Data
+-Creation of two lists that both share ownership of a third list
+*A list a that contains 5 then 10
+*A list b that starts with 3 and c that starts with 4
+Both b and c lists then continue on the first a list containing 5 and 10
+both lists share  the first list containing 5 and 10
+
+enum List {
+ Cons(i32, Box<List>),
+ Nil,
+}
+
+use crate::List::{Cons, Nil};
+
+fn main(){
+  let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
+  let b = Cons(3, Box::new(a));
+  let c = Cons(4, Box::new(a));
+}
+
+=The Cons variant own data that they hold, so when the b list is created, a is moved into b and b owns a
+Then when a is used again when creating c, it is not allowed since a has moved to b
+=The definition of Cons could be changed to hold references instead, but then lifetime parameters have to be specified
+(means that every element in the list will live as long as the entire list
+=Instead, the definition of the list will be changed to use Rc<T> in place of Box<T>
+Each Cons variant now holds a value and an Rc<T> pointing to a List
+When b is created, instead of taking ownership of a, we clone the Rc<List> that a is holding
+thereby increasing the number of references from one to two and letting a and b share ownership of the data that is in the
+Rc<List>
+We also clone a when creating c, increasing the number of references from two to three
+Every time Rc::clone is called, the reference count to the data within the Rc<List> will increase
+and the data won't be cleaned up unless there are zero references to it
+
+NOTE: Via immutable references Rc<T> allows one to share data between multiple parts of a program for reading only
+If Rc<T> would allow one to have multiple mutable references one might violate the borrowing rules
+
+Multiple mutable borrows to the same place can cause data races and inconsistencies

@@ -1,0 +1,97 @@
+-A function is a reusable block of code that performs a specific task
+-Functions organize a program into logical block of code
+-The main function in Rust is the entry point for any program
+-Rust uses snake case as the conventional style for functions and variable names, in which all letters
+ are lowercase and underscore as separate words
+ -A function declaration tells the compiler about the function name, return type and its
+ parameters
+ -A function definition  provides the actual body of the function
+ -The fn keyword is used to declare a function, followed by the function name, a set of parenthesis that will have parameters(if any)
+ and return type(optional)
+ -The curly braces tell the compiler where the function body begins and ends
+
+ Basic syntax:
+ fn function_name(parameter1: Type1, parameter2: Type2) -> ReturnType {
+    //function body
+    //optional return value
+ }
+ or
+
+ fn function_name(param1, param2..paramN){
+   //function body
+ }
+
+
+
+ Function & Descriptions
+ Defining a function: A function definition specifies  what and how a specific task would be done
+ Calling or invoking a function: A function must be called  so as to execute it
+ Returning Functions: Functions may also return a value along with control, back to the caller
+ Parameterized functions: Parameters is a mechanism to pass values to a function
+
+Parameters(They are a mechanism to pass values to a function) -> They form part of a function signature
+A function can be defined to have parameters, which are special variables that are part of a function signature
+-When a function has parameters, one can provide it with concrete values for those parameters
+Technically concrete values are called arguments, but in casual conversion parameters/arguments can be used
+interchangeably for either the variables in a function definition or the concrete values passed when a function
+is invoked
+Parameter values are passed to a function during its invocation
+Unless explicitly specified, the number of values passed to a function must match the number of parameters defined
+In function signatures, one must declare the type of each parameter. This is type annotation in function definition in
+Rust
+Parameters can be passed to a function  using the following techniques:
+i)Pass by value
+-When a method is invoked, a new storage location is created for each value parameter
+The value of actual parameters are copied into them. Hence the changes made  to the parameter inside the invoked method
+have no effect on the argument
+
+ii)Pass by Reference
+-When parameters are passed as reference, unlike value parameters, a new storage location is not created for those parameters
+The reference parameters represent the same memory location as the actual parameters that are supplied
+to the method
+Parameter values can be passed as reference through prefix of variable name with the '&'
+
+
+
+
+
+
+Statement and Expressions
+Function bodies are made up of a series of Statements optionally ending in an expression
+*Statements are instructions that perform some action and do not return a value
+*Expressions evaluate to a resultant value
+Function definitions are also statements
+*//Invoking a function is not a statement in Rust
+Statements do not return values, Therefore you cannot assign a let statement to another variable
+NOTE: Expressions evaluate to a value and make up most of the code that is written in Rust
+Invoking a function is an expression
+Calling a macro is an expression
+
+Function with Return values
+-Functions can return values to the code that calls them. Return values are not named, but their type is declared
+after an arrow
+In Rust the return value of the function is synonymous with the value of the final expression in the block of the
+body of the function
+-One can return early from a function using the return keyword and specifying a value
+but most functions return the last expression implicitly
+
+Syntax 1;
+fn function_name() -> return_type {
+   //statements
+   return value;
+}
+
+//shorthand
+fn function_name() -> return_type {
+  value //no semicolon means this value is returned
+}
+
+Invoke a Function
+A function must be called so as to execute it
+The process is termed as function invocation
+Values for the parameters should be passed when a function is being invoked
+The function that invokes another function is called a caller function
+
+Syntax: function_name(val1, val2, valN)
+
+

@@ -1,0 +1,84 @@
+-Methods are similar to functions. They are declared using the fn keyword and a name, they can have parameters and
+return values
+-Methods are defined within the context of a struct(or an enum or a trait object) and their
+first parameters is always self which represents the instance of the struct the method is being called on
+unlike functions
+
+-Methods must have a parameter named self of type self for their parameter
+//the self is abbreviated with & to indicate that the method borrows the Self instance
+Methods can take ownership of Self, borrow self immutably or borrow it mutably
+-To change the instance that the method has been called on as part of what the method does, we use
+&mut self as a first parameter
+Having a method that takes ownership of the instance by using self just like a first parameter is rare
+The technique is used  when the method transforms self into something else and one wants to prevent the caller
+from using the original instance after the transformation
+
+Note: In rust when a method is called on an object i.e object.value() Rust automatically adds &, &mut
+or *. so the object to match the signature of the method
+Similarly:
+p1.method(&p2);
+(&p1).method(&p2)
+-Automatic referencing behaviour works because methods have a clear receiver - the type is self
+Given the receiver and the name of the method. Rust can figure out  definitely whether the method is reading
+(&self), mutating(&mut self) or consuming self
+
+Methods with Multiple parameters
+-Example:
+#[warn(dead_code)]
+
+struct Rectangle{
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+    //this method takes an immutable borrow of another Rectangle as a Parameter
+    fn can_hold(&self, other: Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
+}
+
+fn main(){
+    let rect1 = Rectangle {
+        width: 30,
+        height: 50,
+    };
+
+    let rect2 = Rectangle {
+        width: 100,
+        height: 10,
+    };
+    let rect3 = Rectangle{
+        width: 50,
+        height: 1000
+    };
+
+    println!("Can rec1 hold rect2? {}", rect1.can_hold(rect2)); //rect1.can_hold(&rect2) //an immutable borrow to rect2, an instance of Rectangle
+    println!("Can rec1 hold rect3? {}", rect1.can_hold(rect3));
+}
+
+
+Associated functions
+Code:
+impl Rectangle {
+   fn square(size:u32) -> Self {
+    Self {
+     width: size,
+     height: size,
+       }
+    }
+}
+-All functions defined within the impl block are called associated functions because they are associated with
+the type named after impl
+Associated functions can be defined as those that don't have self as their first parameter(and thus are not methods)
+because they do not need an instance of the type to work with
+Associated functions that are not methods are often used as constructors that return a new instance of struct
+They are often called new
+The self keywords in the return type and the body of the function are aliases for the type that appear after the impl
+keyword
+-To invoke an associated function one uses the syntax :: with the struct name
+*let variable = Struct::associated_function
+

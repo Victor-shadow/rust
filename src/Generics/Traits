@@ -1,0 +1,197 @@
+=Traits can be used to implement a standard set of behaviours(methods) across multiple structures
+-Traits behave like interfaces in Object Oriented Programming
+
+Syntax:
+trait some_trait {
+ //abstract or method that is empty
+ fn method1(&self){
+   //implemented method
+   fn method2(&self){
+   }
+ }
+-Traits can contain concrete methods(methods with a body) or abstract method(methods without a body)
+Use a concrete method if the definition of the method will be shared by all structures implementing the trait
+However, a structure can choose to override the function defined by a trait
+Use abstract methods, if the method definition varies for implementing structures
+
+Syntax:
+impl some_trait for structure_name {
+   //implement method1() name
+   fn method1(&self){
+   }
+}
+
+=Traits define the functionality a particular type has and can share with other types
+Traits can be used to define shared behaviour in an abstract way
+Trait bounds are used to specify that a generic type can be any type that has a certain  behaviour
+
+Defining a Trait
+-A type's behaviour consists of the methods that can be called on that type. Different types share the same behaviour
+if we can call the same methods on all those types
+Trait definitions are a way to group method signatures together to define a set of behaviours necessary to accomplish a purpose
+=A trait is declared using the trait keyword and then the traits name
+=One can also declare a trait using the pub keyword so that crates depending on this crate can make use of the trait as well
+Inside the curly braces, method signatures are declared that describe the behaviours of the type that implement this trait
+After the method signature, instead of providing an implementation with the curly braces, a semicolon is used
+Each type implementing the trait must provide its own custom behaviour for the body of the method
+-A trait can have multiple methods in its body; a method signature are listed one per line and each line ends in a semi-colon
+
+Implement a trait on a type
+Implementing a trait on a type is similar to implementation of regular methods. The difference is that, after the impl one
+puts the trait name one wants to implement, then use the for keyword and then specify the name of the type
+to implement the trait for
+Within the impl block, put the method signatures that the trait definition has defined. Instead of adding a semicolon, after each signature
+use curly brackets and fill in the method body with the specific behaviour that the methods of the trait should have for the particular
+type
+NOTE: a library that implements a trait allows users  of a particular crate to call the trait methods on instances
+in the same way regular methods can be invoked. However, the user has to bring a trait into scope as well as the types
+NOTE: One can only implement a trait on a type  if either the trait or type, or both are local to a crate
+NOTE: External traits cannot be implemented on External types
+
+Aggregator Crate
+use aggregator::{<TypeA>, <Trait>};
+
+/// A generic data structure representing some kind of item
+pub struct <StructA> {
+    pub <field_1>: <Type1>,
+    pub <field_2>: <Type2>,
+    pub <field_3>: <Type3>,
+    pub <field_4>: <Type4>,
+}
+
+impl <Trait> for <StructA> {
+    fn <trait_method>(&self) -> <ReturnType> {
+        format!("{}, by {} ({})", self.<field_1>, self.<field_3>, self.<field_2>)
+    }
+}
+
+/// Another generic data structure representing a different kind of item
+pub struct <TypeA> {
+    pub <field_a>: <TypeA1>,
+    pub <field_b>: <TypeA2>,
+    pub <flag_1>: bool,
+    pub <flag_2>: bool,
+}
+
+impl <Trait> for <TypeA> {
+    fn <trait_method>(&self) -> <ReturnType> {
+        format!("{}: {}", self.<field_a>, self.<field_b>)
+    }
+}
+
+fn main() {
+    let item = <TypeA> {
+        <field_a>: <TypeA1>::from("<placeholder_value_a>"),
+        <field_b>: <TypeA2>::from("<placeholder_value_b>"),
+        <flag_1>: false,
+        <flag_2>: false,
+    };
+
+    println!("Summary: {}", item.<trait_method>());
+}
+
+NOTE: One can't implement the Display Trait on Vect<T> within aggregator crate since Display and Vect<T>
+are both defined in the Standard library and aren't local to the aggregator crate
+This restriction is part of a property called coherence, the orphan rule, so named because the parent type is Absent
+NOTE: two crates cannot implement the same trait for the same type
+
+Default Implementation
+-It is useful to have a default behaviour for some or all of the methods in a trait instead of requiring implementations
+for all methods in every type. Then as we implement the trait on a particular type we can keep or override each method's default behaviour
+-To use a default implementation to summarize instances of a trait, specify an empty impl block
+NOTE: The syntax for overriding a default implementation is the same as the syntax for implementing a trait method
+that does not have a default implementation
+Default implementations can call other methods in the same trait, even if those other methods dont have a default implementation
+-A trait can provide a lot of useful functionality and only require implementors to  specify a small part of it
+
+Note: it is not possible to call the default implementation from an overriding implementation of the same method
+
+Trait as Parameters
+-Use of traits to define functions that accept many different types
+
+Impl Trait syntax
+*pb fn name(item: &impl Trait){
+  println!("Implement the trait! {}", item.trait_method());
+}
+
+or
+pb fn name(item1: &impl Trait, item2: &impl Trait){
+
+
+}
+Instead of a concrete type for the item parameter, we specify the impl keyword and the trait name
+This parameter accepts any type that implements the specified trait
+In the body of the function one can call any methods on item that are obtained from the trait and pass any instance
+Code that calls the function with any other type that do not implement the trait  won't compile
+
+
+Trait Bound syntax
+*pb fn name<T: trait>(item: &T) {
+  println!("The method implements trait! {}", item.trait_method());
+}
+-One places trait bounds with the declaration of the generic type parameter after a colon and inside the angle brackets
+-for parameters to have the same generic type a trait bound is used
+
+*pb fn name<T: trait>(Item1: &T, item2: &T){
+
+}
+-The generic Type T specified as the type of the item 1 and item 2 parameters constrains the function
+such that the concrete of the value passed as an argument for item1 and item2 must be the same
+
+Specifying multiple trait bounds
+*pb fn name(item: &(impl Trait + Trait)){
+
+}
+
+Similarly on generic types
+pb fn name<T: Trait + Trait>(item: &T){
+
+}
+
+Clearer Trait Bounds with where clauses
+-If each generic has its own Trait Bound, so functions with multiple generic type parameters can contain trait bound information
+between the function name and its parameter list, hence the function signature is difficult to interpret
+Alternatively, Rust provides a syntax  for specifying trait bounds inside a where clause
+after a function signature. So instead of;
+fn function_name<T: Display(Trait) + Clone(Trait), U: Clone + Debug>(t: &T, u: &U) -> i32 {
+
+}
+
+a where clause can be used:
+fn function_name<T, U> (t: &T, u:&U) -> { //&T, &U - references/borrowing of values of type T and U
+where:
+T: Display  + Clone,
+U: Clone + Debug,
+}
+
+Returning Types that implement Traits
+-One can also use the impl Trait syntax in the return position to return a value of some type that
+implements a trait without specifying the concrete type
+
+Example
+fn returns_type() -> impl Trait {
+    StructName {
+        field1: String::from("value"),
+        field2: String::from(
+            "value",
+        ),
+        field3: false,
+        field4: false,
+    }
+}
+
+The ability to specify a return type by only a trait  it implements is useful in closures and iterators
+Closures and iterators create types that only the compiler knows or types that are very long to specify
+The Impl Trait Syntax lets one  to concisely specify a function returns some type that implement the Iterator trait
+NOTE: Self is a type alias for the type of the impl block
+NOTE: the  PartialOrd trait allows for comparison and the DisplayTrait allows for Printing
+
+NOTE:One can also conditionally implement a trait for any type that implements another trait
+Implementations of a trait on any type that satisfies the trait bound are called blanket implementations and are used
+extensively in the Rust standard library
+i.e 'The standard library that implements ToString trait on any type that implements the Display Trait'
+the impl block in the standard library is similar to;
+impl<T: Display> ToString for T{
+
+}
+//One can call the to_string method defined by the ToString trait on any type that implements the Display trait

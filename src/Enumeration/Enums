@@ -1,0 +1,176 @@
+-In Rust programming, when we have to select a value from a list of possible variants we use
+enumeration types
+-An enumeration type is declared using the enum keyword
+-An enum enables one to identify a value as a possible set of values
+
+Syntax:
+enum enum_name {
+ variant1,
+ variant2,
+ variant3
+}
+
+------------------------------------------------------------------------------------------------------------------------
+To create Enum instances
+Example:
+enum IpAddress {
+ V4,
+ V6,
+}
+
+//create instances of the enum
+let four = IpAddress::V4,
+let six =  IpAddress::V6,
+-The variants of the enum are namespaced  under its identifier and a double colon is used to separate the two
+
+//define a function that accepts IpAddresses
+fn route(ip_address: IpAddress){
+
+}
+//invoke the function with the enum variants
+route(IpAddress::V4);
+route(IPAddress::V6);
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Enums with Structs
+enum IpAddress {
+  V4,
+  V6,
+}
+
+struct Ip {
+  type:IpAddress,
+  address: String,
+}
+
+let variable = Ip {
+  type: IpAddress::V4,
+  address: String::from("127.0.0.1");
+};
+
+let variable_2 = Ip{
+    type: IpAddress::V6,
+    address: String::from("::1"),
+};
+
+//A struct IP has been defined that has two fields: type(it is of IpAddress) and address(String)
+//there are two instances of the struct
+variable - it has a value of IpAddress::V4 with address data of "127.0.0.1"
+variable2 - it has a value of IpAddress::V6 with address data of "::1"
+
+------------------------------------------------------------------------------------------------------------------------
+
+Enumeration
+-enum IpAddress {
+  V4(String),
+  V6(String),
+}
+
+let variable = IpAddress::V4(String::from("127.0.0.1")); //IpAddress::V4 is a function call that takes a String argument and returns
+//an instance of IpAddress type
+let variable_2 = IpAddress::V6(String::from("::1"));
+
+//data is attached to each variant of the enum directly
+//the name of each enum variant that is defined also becomes a function that constructs the instance of the enum
+
+//each variant can have different types and amounts of associated data
+enum IpAddress {
+  V4(u8, u8, u8, u8),
+  V6(String),
+}
+let variable = IpAddress::V4(127, 0, 0, 1);
+let variable_2 = IpAddress::V6(String::from("::1");
+
+
+Standard library approach
+struct IpV4Addr {
+  // --snip --
+}
+
+struct IpV6Addr {
+  // --snip --
+}
+
+enum IpAddr {
+  V4(IpV4Addr)
+  V6(IPV6Addr)
+}
+
+//any kind of data can be put inside an enum variant
+
+------------------------------------------------------------------------------------------------------------------------
+Enum variants with different data types
+enum Name {
+  Quit, //has no associated to at all
+  Move {x: i32, y:i32 } //has named fields
+  Write(String), //includes a Single String
+  ChangeColor(i32, i32, i32),
+}
+
+The enum has four variants with different types
+
+Similarly
+struct QuitMessage; //unit struct
+struct MoveMessage {
+  x: i32,
+  y: i32,
+}
+
+struct WriteMessage(String); //tuple Struct
+struct ChangeColorMessage(i32, i32, i32); //tuple struct
+
+------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------------------------------------
+Methods on enums
+impl Message {
+  fn call(&self){
+    //method body call
+  }
+}
+
+let output = Message::Write(String::from("Rust"));
+output.call();
+
+-The body of the method would use self to get the value that the method was called on
+
+-----------------------------------------------------------------------------------------------------------------------
+
+Option Enum
+-Rust does have an Enum that can encode the concept of a value being present or null
+This enum is Option<T> and it is defined by the standard library as
+* enum Option<T> {
+   None,
+   Some(T),
+}
+-The Some and None variants can be used directly without the Option:: prefix
+-The Option<T> is a regular enum and some(T) and None are still variants of the Type Option<T>
+The <T> Syntax is a generic type Parameter
+<T> means that the Some variant of the Option Enum can hold one piece of data of any type, and that each concrete type
+that gets used in place of T makes the overall Option<T> type
+
+Option values to hold data types
+let number = Some(10); //the type of number is Option<i32>
+let some_char = Some('a'); //the type of some_char is Option<char>
+//rust can infer these types since since there are specified values inside the Some variant
+
+let absent_value : Option<i32> = None
+
+//when one has some Value, it is known that  a Value is Present and the value is held within Some
+//when there is a None value, it similarly means a null value
+Note: In order to perform any T operations Option<T> has to be converted to T
+Note: In order to have a value that can be possibly be null, you must explicitly opt in by making the type
+of that value Option<T>, Then when using that value, you are required to explicitly handle the case when the value
+is null
+
+
+Syntax of Option Enum
+enum Option<T> {
+  Some(T), //used to return a value
+  None //used to return Null, rust does not support null keyword
+}
+Rust does not support the Null keyword, The value None in the enumOption can be used by a function
+to return a null value
+If there is some data to return, the function can return Some (data)
+

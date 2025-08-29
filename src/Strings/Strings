@@ -1,0 +1,83 @@
+-The two most used string types in Rust are
+ String - String Object
+ &str - String Literal
+
+String Literal
+:String literal(&str) is used when the value of a string is known at runtime
+String literals are a set of characters, which are hardcoded into variables
+They are found in a module std::str
+They are also known as string slices
+String Literals are static by default
+The String literals are guaranteed to be valid for the duration of the entire program
+
+
+String Object
+-The String Object is provided in Standard Library
+A String is a growable collection. It is mutable and UTF-8 encoded type
+The String object type can be used to represent String values that are provided at Runtime
+String object is allocated at the heap
+
+To create a String object use:
+i)String::new()
+//creates an empty String
+ii)String::from()
+//This creates a String with some default value passed as a parameter to the from() method
+
+-A string is stored as a vector of bytes(Vec<u8>) but guaranteed to always be a valid UTF-8
+sequence
+-String is heap allocated, growable and not null terminated
+-A string stores its data on the heap
+&str is a slice(&[u8]) that always points to a valid UTF-8 sequence and can be used
+to view into a string
+
+Methods of a String Object
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Method                       Signature                                                               Description
+new()                        pub const fn new() -> String                                            Creates a new empty String
+
+to_string()                  fn to_string(&self) -> String                                           Converts the given value to
+                                                                                                     a String
+
+replace()                    pub fn replace<'a P>(&'a self, from: P,  to:str) -> String              Replaces all matches of a pattern
+                                                                                                     with another string
+
+as_str()                     pub fn as_str(&self) -> &str                                            Extracts a String slice containing
+                                                                                                     the entire String
+
+push()                       pub fn push(&mut self, ch:char)                                         Appends the given character to the end
+                                                                                                     of the given String
+
+push_str()                   pub fn push_str(&mut self, string: &str)                                Appends a given string slice onto the end
+                                                                                                     of the given String
+
+len()                        pub fn len(&self) -> usize                                              Returns the length of the String in bytes
+
+trim()                       pub fn trim(&self) -> &str                                              Returns a String slice with leading and trailing whitespace
+                                                                                                     removed
+
+split_whitespace             pub fn split_whitespace(&self) -> SplitWhitespace                       Splits a string slice by whitespace and returns an Iterator
+
+
+split()                      pub fn split<'a P>(&'a self, pat: P) -> Split <'a P>                    Returns an Iterator over substrings of this string slice, separated by
+                             where P is a pattern can be &str,char or a closure that                 characters matched by a pattern
+                             determines the split
+chars()                      pub fn chars(&self) -> Chars                                            Returns an Iterator over the chars  of a String slice
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+*String Concatenation
+-A String value can be appended to another String
+This is called concatenation or interpolation
+The result of a String concatenation is a new String Object
+The + operator internally uses a add method
+The syntax for the add function takes two parameters. The first parameter is the String object itself and the second parameter
+is a reference of the second string object
+
+//add function
+add(self, &str) -> String {
+//returns a String object
+}
+
+
+
+
+

@@ -1,0 +1,147 @@
+-Operators in general are used to perform operations on values and variables
+These are standard symbols used for the purpose of logical and arithmetic operations
+Operators tells the compiler or interpreter to perform a specific mathematical, logical and
+relational operation
+
+Types of Operators
+i: Arithmetic Operations
+ii: Comparison Operators
+iii: Logic Operators
+iv: Bitwise Operators
+v: Compound Assignment Operators
+
+
+Arithmetic Operators
+-Arithmetic Operators are used for performing mathematical operations like;
+addition, subtraction, multiplication, division
+
+
+------------------------------------------------------------------------------------------------------------------------
+Operator                            Role                                     Example
++(Addition)                         Returns the addition of two operands      A + B = 60
+
+-(Subtraction)                      Returns the difference of the values      A - B = 20
+                                    (subtract right operand from the left)
+
+*-Multiplication                    Returns the products of the values        A * B  = 800
+
+/-Division                          Divides the left operand by the right     A / B = 2
+                                    one and returns the quotient
+
+%-Modulus                           Divide the left operand by the right one   A % B = 0
+                                    and returns the remainder
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Comparison Operators
+-These are operators that compare values and return true or false depending on conditions
+
+Operator                                  Role                                               Example
+>                                         Greater than                                       (A > B) is True
+
+<                                         Less than                                          (A < B) is False
+
+==                                        Equal to                                           (A==B) is False
+
+!=                                        Not equal to                                       (A != B) Is True
+
+>=                                        Greater than or equal to                           (A >= B) is true
+
+<=                                        Less than or equal to                              (A <= B) is False
+
+------------------------------------------------------------------------------------------------------------------------
+
+Logical Operators
+-Are used to combine two or more conditions
+They return a Boolean value
+
+------------------------------------------------------------------------------------------------------------------------
+Operators                         Role                                      Example
+&&                                The operator returns true only            (A&&B) is False
+                                  if all the expression specified
+                                  return true
+
+||                                The operator returns true                 (A||B) is True
+                                  if at least one of the expressions
+                                  specified returns true
+
+!                                 The operator returns the inverse of       !(A||B) is False
+                                  of the expressions result
+                                  i.e !(>5) returns false !(A > 10) is True
+                                  Bitwise operator
+
+------------------------------------------------------------------------------------------------------------------------
+
+Bitwise Operators
+Bitwise is a level of operation that involves working with individual bits
+which are the smallest unit of data in a computer. Each bit has a single binary value: 0 or 1
+Assume that A = 2; B = 3;
+
+Operation                                Role                                                        Example
+&(Bitwise AND)                           It performs a Boolean AND operation                         (A & B) is 2
+                                         on each bits of integer arguments
+
+|(Bitwise OR)                            It performs a Boolean OR operation                          (A | B) is 3
+                                         on each bits of integer arguments
+
+^ (Bitwise XOR)                          It performs a Boolean exclusive OR                           (A ^ B) is 1
+                                         operation on each bit of Integer
+                                         arguments
+                                         Exclusive OR means that either operand
+                                         one is true or operand two is true, but
+                                         not both
+
+!Bitwise Not                             It is a unary operator and operates by                        !A is 2
+                                         reversing all the bits in the operand
+
+<< (Left Shift)                          It moves all the bits in its first operand to the             (B<<1) is 6
+                                         left by a number of places specified in the second
+                                         operand. Now bits are filled by zero
+                                         Shifting a value left by one position is equivalent
+                                         to multiplying it by two, shifting two positions is
+                                         equivalent to multiplying it  by 4 and so on
+
+>> (Right Shift)                         Binary Right Shift Operator. The left operand value           (B>>1) is 1
+                                         is moved right by the number of bits specified by the
+                                         right operand
+
+
+>>>(Right shift with zero)               This operator is just like the >> operator, except that        (A>>>1) is 1
+                                         the bits shifted to the left are always zero
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Compound Assignment Operators
+Compound assignment operators perform the operation specified by the additional operator, then assign the result
+to the left operand
+
+expression1 += expression2
+
+A = 4
+
+Operator                          Role                                  Example
++=                                Arithmetic addition and               A += 2 is 6
+                                  assignment
+
+-=                                Arithmetic subtraction and            A -= 2 Is 2
+                                  assignment
+
+*=                                Arithmetic multiplication and         A*=2 is 8
+                                  assignment
+
+/=                                Arithmetic division and assignment    A/=2 is 2
+
+%=                                Arithmetic remainder and assignment   A %=2 is 0
+
+<<=                               Left shift and assignment             A<<=1 is 0
+
+>>=                               Right shift and assignment            A>>=1 is 2
+
+&=                                Bitwise AND and assignment            A &= 2 IS 0
+
+|=                                Bitwise OR and assignment             A|=2 IS 6
+
+^=                                Bitwise exclusive OR and              A^=2 IS 1
+                                  assignment
+
+------------------------------------------------------------------------------------------------------------------------

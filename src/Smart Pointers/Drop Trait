@@ -1,0 +1,40 @@
+=The second trait important to the smart pointer pattern is the Drop trait, it allows one to customize
+values that are about to go out of scope
+=One can provide implementations for the Drop trait on any type, and that code can be used to release resources
+=The functionality of the Drop Trait is almost always used when implementing a smart pointer
+i.e When a Box<T> is dropped it will deallocate the space on the heap that the Box points to
+=In Rust one can specify that a particular bit of code be run whenever a value goes out of scope
+and the compiler will insert the code automatically
+=One has to specify the code to run when a value goes out of scope by implementing the Drop trait
+The Drop trait requires one to implement a method named drop that takes a mutable reference
+to self
+
+fn main(){
+let c = CustomSmartPointer {
+ data: String::from("some data"),
+ }
+ println!("CustomSmartPointer created");
+ c.drop();
+ println!("CustomSmartPointer dropped before the end of main");
+}
+
+Note: One is not allowed to explicitly call drop . The error message uses a term called destructor, the general term for a function
+that cleans up an instance
+A destructor is analogous to a constructor, which creates an instance, The drop function in Rust is one of the
+Destructures
+=Rust does not allow one to call the drop method explicitly since It would automatically  call drop on the value at the end
+of main. This would cause a double free error since Rust will attempt to clean up the same value twice
+
+=We cannot disable the automatic  insertion of drop when a value gores out of scope, and one can't call the drop method
+explicitly. So if one needs to force a value  to be cleaned up early, use the std::mem::drop function
+
+=It is called by passing as an argument the value to be forced drop,
+
+fn main(){
+  let c = CustomSmartPointer {
+    data: String::from("some data");
+    };
+    println!("CustomSmartPointer created");
+    drop(c);
+    println!("CustomSmartPointer dropped before the end of main");
+ }

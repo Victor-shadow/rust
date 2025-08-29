@@ -1,0 +1,38 @@
+=Rust Memory safety guarantees make it difficult, but not impossible , to accidentally create memory
+that is never cleaned up(memory leak)
+=Preventing memory leak entirely is not one of Rust guarantees, meaning memory leaks
+are memory safe in Rust
+
+Create a Reference Cycle
+=Rust allows memory leaks  by using Rc<T> and Refcell<T>. It is possible to create references where
+items refer to each other in a cycle. This creates memory leaks because the reference count of each item in the cycle will never
+reach zero, and values will never be dropped
+
+
+Preventing Reference Cycles  using Weak<T>
+=Calling Rc::clone  increases strong_count of an Rc<T> instance, and  an Rc<T> instance is only cleaned up if the
+strong_count is 0,
+=You can also create a weak reference to the value with an Rc<T> instance  by calling Rc::downgrade and passing a references
+to the Rc<T>
+Strong References are how to share ownership of an Rc<T> instance
+Weak references don't express an ownership relationship, and their count does not affect when an
+Rc<T> instance is cleaned up
+This won't cause a reference cycle because any cycle involving some weak references will be broken once the strong reference
+count  of values is involved is 0
+=When one calls Rc::downgrade you get a smart pointer of type Weak<T> instead of increasing  the strong_count in the Rc<T> instance by 1
+calling Rc::downgrade  increases the weak_count by 1
+The Rc<T> type uses a weak count to keep track of how many weak<T> references exists, similar to strong_count
+The difference is that for the weak_count it does not need to be zero for the Rc<T> instance to be cleaned
+up
+Because the value that weak<T> references might have been dropped to do anything with the value that weak<T> is pointing to
+one must make sure that the value exists
+Do this by calling the upgrade method on a Weak<T> instance, which returns an Option<Rc<T>>
+A result of some is got if the Rc<T> value has not been dropped yet and a result of none if
+the Rc<T> value if it has been dropped
+Because upgrade returns an Option<Rc<T>>, Rust ensures that the some case and the None case are handled and there is no invalid
+pointer
+
+
+
+
+

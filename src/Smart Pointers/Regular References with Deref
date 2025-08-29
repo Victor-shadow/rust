@@ -1,0 +1,137 @@
+-Implementing the deref trait allows one to customize the behaviour of the dereference operator *
+Smart pointers can be treated like a regular reference, where one can write code that operates on
+references and the code can be used with smart pointers
+
+Regular Reference
+-A regular reference is a type of pointer(an arrow pointing to a value stored )
+
+fn main(){
+ let x = 5;
+ let y = &x; //y borrows immutably from x
+
+ assert_eq!(5, x);
+ assert_eq!(5, *y);
+}
+The variable x holds an i32 value of 5 and y is set to equal to a reference of x, therefore x can be asserted to equal 5
+-To make an assertion about the value of y, one has to use *y to follow the reference to the value it is pointing
+to(dereference) so that the compiler can compare the actual values
+Once y is dereferenced, one has access to the integer value y is pointing to
+NOTE: Comparing a number and a reference to a number is not allowed because they are of different types
+One must use the dereference operator to follow the reference to the value pointed to
+
+Box<T> as a reference
+fn main(){
+  let x = 5;
+  let y = Box::new(x);
+
+  assert_eq!(5, x);
+  assert_eq!(5, *y);
+}
+
+
+//y is set as an instance of a box pointing to a copied value x rather than a reference pointing to the value of x
+//In the last assertion one can use the dereference operator to follow the box's pointer
+
+Define a Smart Pointer
+-struct MyBox<T>(T);
+
+impl<T> MyBox<T> {
+   fn new(x: T) -> MyBox<T> {
+   MyBox(x);
+ }
+}
+
+A struct named MyBox is defined and declare a generic parameter T to allow type to hold values of any type
+MyBox type is a tuple struct with one element of Type T
+The MyBox::new function takes one parameter of type T and returns a MyBox instance that holds the values
+passed in
+
+fn main(){
+let x = 5;
+let y = MyBox::new(x);
+
+assert_eq!(5, x);
+assert_eq!(5, *y);
+}
+
+MyBox<T> type cannot be dereferenced because the ability has not been implemented the ability on that type
+To enable dereferencing with the * operator implement the Deref trait
+
+
+Implement the Deref Trait
+-To implement a trait, one needs to provide the implementations for the trait required methods
+The Deref trait, provided by the standard library requires one to implement one method named deref
+that borrows self and returns a reference to the inner data
+
+use::std::ops::Deref
+impl<T> Deref for MyBox<T> {
+  type Target = T;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+ }
+}
+//the type Target = T syntax defines an associated type for the Deref Trait to Use. Associated types are a slightly different
+way to declare a generic parameter
+-We fill in the body of the deref method with &self.0, so deref returns a reference to the value to be accessed with the * operator(dereference operator)
+Without the Deref trait, the compiler can only dereference & references. The deref method gives the compiler the ability
+to take a value of any type that implements the Deref and calls the deref method to get an & reference that it knows how to dereference
+
+NOTE: when *y is entered Rust actually runs this code : *(y.deref())
+Rust actually substitutes the * operator with a call to the deref method and then a plain dereference
+The reason that the deref method returns a reference to a value, and that plain dereference outside the parenthesis  in
+*(y.deref()) is still necessary and has to do with the ownership system
+If the deref method returned the value directly instead of a reference to the value, the value would be moved out of self
+
+Where one uses the dereference operator, ownership of the inner value inside MyBox<T>
+is not taken
+Note that the * operator is replaced with a call to the deref method and then a call to the * operator just once, each time it is used in the
+code
+Because the substitution of the * operator does not recurse infinitely, one ends up with the data type i32 with matches 5
+in assert_eq
+
+Implicit Deref coercions with Functions and Methods
+-Deref coercion converts a reference to a type that implements the Deref trait into a reference of another type
+i.e Deref coercion can convert the &String to &str since the String implements the Deref trait such that it returns &str
+Deref coercion is a convenience that rust performs on arguments to functions and methods
+and works on only types that implement the Deref trait. It happens automatically  when a reference is passed
+to a particular type value as an argument to a function or method that does not match the parameter type in the function or method
+definition
+A sequence of calls to the deref method converts the types provided into the type the parameter needs
+
+Deref coercion prevents the addition of explicit references and dereferences with & and *
+
+i.e
+ fn deref(name: &str){
+     println!("Rust, {name}!");
+}
+
+fn main(){
+  let m = MyBox::new(String::from("Rust"));
+  deref(&m); //deref coercion makes it possible to invoke deref with a reference to a value of type MyBox<String>
+
+}
+//Since Deref trait is implemented on MyBox<T> Rust can turn &MyBox<String> into &String by calling deref
+The standard library provides an implementation of Deref on String that returns the string slice
+Rust calls the deref again to turn &String to &str
+
+//NO DEREF COERCION
+fn main(){
+  let m = MyBox::new(String::from("Rust"));
+  deref(&(*m)[..]);
+}
+The (*m) dereferences the MyBox<String> into a String Then the & and [..] take a string slice of the String that is equal
+to the whole string to match the signature of deref
+NOTE: When the Deref trait is defined for the types involved, Rust will analyze the types and use
+Deref::deref as necessary to get a reference to match the parameter's type
+
+Deref Coercion with Mutability
+-The Deref trait can be used to override the * operator on mutable and immutable references
+-Rust does deref coercion when it finds types and trait implementation in three cases
+i)From &T to &U when T: Deref<Target=U>
+ii)From &mut T to &mut U when T: DerefMut<Target = U> //IMPLEMENTS MUTABLE REFERENCES
+iii)From &mut T to &U when T: Deref<Target = U>
+
+NOTE: Rust can also coerce a mutable reference to an immutable one, But the reverse is not possible
+(Immutable references will never coerce to mutable references) because of Borrowing rules
+If one has a mutable reference, that mutable reference must be the only reference to that data
