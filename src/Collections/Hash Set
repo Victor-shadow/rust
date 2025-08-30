@@ -1,0 +1,176 @@
+=A HashSet is implemented as a HashMap where the value is () storing unique elements  of type T
+
+Characteristics
+I)Uniqueness: Does not allow duplicate elements
+II)No Ordering: Does not maintain insertion order
+III)Performance: Offers average constant time complexity 0(1) for basic operations like insert, remove,
+and contains assuming a good hash function
+IV)Requirements: Elements must implement the Eq andHashTraits
+
+Type: pub struct HashSet<T, S = RandomState> {/*private fields*/}
+
+Constraints and Logic Errors
+I)Hash and Eq Consistency: If two keys are equal (K1 == K2) their hashes must be equal
+hash(K1) == hash(K2) Violating this is a logical error
+II)modification warning: Modifying an element in the set such that its hash or equality changes
+while it is stored is a logic error, this can occur through Cell, RefCell global state, I/O unsafe code
+III)Consequences: Logic errors may lead to panics, incorrect results, aborts, memory leaks, or non-termination, but not
+undefined behaviour
+
+Construction and Initialization
+new() = Creates an empty HashSet with a default Hasher a initial capacity of 0 - 0(1)
+
+with_capacity(capacity: usize) = Creates an empty HashSet with the least specified capacity  - 0(1)
+
+with_hasher(hasher: S) = Creates an empty HashSet with a custom hasher - 0(1)
+
+with_capacity_and_hasher(capacity: usize, hasher: S) = Creates an empty HashSet with a custom capacity and hasher - 0(1)
+
+Basic Operations and Methods
+insert(&mut self, value:T) -> bool = Adds a value, Returns true if newly inserted
+
+remove<Q>(&mut self, value: &Q) -> bool = Removes a value returns true if present
+
+contains<Q>(& self, value:&Q) -> bool = Checks if value exists
+
+get<Q>(&self, value:&Q) -> Option<&T> = Returns reference to a value if present
+
+take<Q>(&self, value: &Q) -> Option<T> = Removes and returns a value if present
+
+replace(&mut self, value: T) -> Option<T> = Replaces an existing value and returns the old value
+
+
+Set Properties
+i)len(&self) -> usize = Returns the number of elements = 0(1)
+
+ii)is_empty(&self) -> bool = Returns true if empty = 0(1)
+
+iii)capacity(&self) -> usize = Returns the current capacity = 0(1)
+
+iv)clear(&mut self) = removes all elements = 0(n)
+
+Memory Management
+i)reserve(&mut self, additional: usize) = reserves capacity for additional elements = 0(n)
+
+ii)shrink_to_fit(&mut self) = Shrinks capacity to fit the current size = 0(n)
+
+iii)shrink_to(&mut self, min_capacity: usize) = Shrinks capacity to at least min_capacity = 0(n)
+
+
+Boolean operations
+i)is_disjoint(&self, other: &HashSet<T, S>) -> bool = Checks if two sets have no common elements
+
+ii)is_subset(&self, other:&HashSet<T, S>) -> bool = Checks if self is a subset of other
+
+iii)is_superset(&self, other: &HashSet<T, S>) -> bool = Checks if self is a superset of other
+
+Element Retrieval Operations(0(log n))
+i)difference<'a>(&'a self, other: &'a HashSet<T, S>) -> Difference<'a, T, S> = returns an iterator over elements in self but no other
+
+ii)symmetric_difference<'a>(&'a self, other: &'a HashSet<T, S>)-> symmetric_difference<'a T, S> = returns the iterator over elements in either set but not both
+
+iii)intersection<'a>(&'a self, other: &'a intersection<T, S>) -> intersection<'a, T, S> = returns an iterator over the elements in both sets
+
+iv)union<'a>(&'a self, other: &'a union<T, S>) -> union<'a, T, S> = returns an iterator over the elements in either set
+
+Bulk and Conditional Operations
+=iter(&self) -> Iter<'_, T> = Returns an iterator over the elements in arbitrary order
+
+=drain(&mut self) -> Drain<'_, T> = Clears the set and returns an iterator over all elements
+
+=extract_if<F>(&mut self, pred: F) -> ExtractIf<'_, T, F> = Creates an iterator that removes and yields elements based on a predicate
+
+retain<F>(&mut self, f: F) = Retains only elements satisfying the predicate = 0(capacity)
+
+get_or_insert(&mut self, value: T) -> &T = inserts if not present, then returns a reference = 0(1) average
+
+get_or_insert_with<Q, F>(&mut self, value: &Q, f: F) -> &T = Inserts a computed value if not present then return a reference = 0(1) average
+
+
+Entry API(Nightly only)
+#![feature(hash_set_entry)]
+use std::collection::hash_set::Entry;
+
+let mut set = HashSet::new();
+match set.entry("key"){
+Entry::Occupied(o) => println!("Already exists:{:?}", o.get());
+Entry::Vacant(v) => { v.insert(); println!("Inserted new key"); }
+
+Allows complex  conditional logic for insertion and removal
+
+Const and Static usage
+Issue: HashSet::new()  cannot be used in const context because of random seeding
+Workaround: use a fixed hasher(BuildHasherDefault<DefaultHasher>) but this is vulnerable to
+to HashDos attacks
+
+use std::collections::HashSet;
+use std::hash::{BuildHasherDefault, DefaultHasher};
+use std::sync::Mutex;
+
+const EMPTY_SET: HashSet<String, BuildHasherDefault<DefaultHasher>> = HashSet::with_hasher(BuildHasherDefault::new());
+
+static SET: Mutex<HashSet<String, BuildHasherDefault<DefaultHasher>>> = Mutex::new(HashSet::with_hasher(BuildHasherDefault::new());
+
+Usage with Custom Types
+It must implement Eq, PartialEq and Hash
+*use std::collections::HashSet;
+#derive(Hash, Eq, PartialEq, Debug)]
+struct Viking {
+name: String,
+power: usize,
+}
+let mut vikings = HashSet::new();
+vikings.insert(Viking { name: "Rust".to_string(), power: 9});
+
+Manual Implementation
+use std::hash::{Hash, Hasher};
+
+impl PartialEq for Viking {
+  fn equal(&self, other: &self) -> bool {
+  self.name == other.name && self.power == other.power
+}
+}
+impl Eq for Viking {
+}
+ impl Hash for Viking {
+ fn Hash<H: Hasher>(&self, state: &mut H) {
+    self.name.hash(state);
+    self.power.hash(state);
+   }
+ }
+ Important: ensure that k1 == k2 implies hash(K1) == hash(k2)
+
+ Performance characteristics
+i)Basic Operations: Average 0(1) for insert, remove,  and contains
+
+ii)Iteration: 0(capacity) because it visits all buckets, including empty ones
+
+iii)Memory Overhead: Each element is stored in a hash bucket with additional head for pointers
+ and control bytes
+
+iv)Resizing: Automatically resizes when capacity is exceeded, which involves rehashing all elements
+
+Common Pitfalls and Best Practices
+i)Logic Errors; Ensure that Hash and Eq implementations are consistent
+
+ii)Performance: Prefer shrink_to_fit to shrink_to to minimize memory usage after removing many elements
+
+iii)Concurrency: HashSet is not thread safe. For concurrent access use Mutex<HashSet<T>> or RwLock<HashSet<T>>
+
+iv)Hashing: for custom hashers, be aware that manually setting a hasher can expose DoS attacks
+
+
+Trait Implementations
+I)Clone: Where T:Clone and S:Clone
+
+II)Debug: Where T:Debug
+
+III)default:  Creates an empty set with a default Hasher
+
+IV)FromIterator<T> = Collects from an iterator
+
+V)Extend<T> and Extend<&T> add multiple elements
+
+VI)partialEq and Eq : Set Equality
+
+VII)BitAnd, BitOr , BitXOr, Sub : Overloaded operators for intersection, union, symmetric difference and difference

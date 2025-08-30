@@ -1,0 +1,198 @@
+=BTreeMap<K, V, A> is an ordered map based on a B-Tree data structure
+It provides efficient key - value storage and retrieval while maintaining keys in a sorted order
+The B-Tree design represents a compromise between cache efficiency and minimizing comparisons  during searches
+
+Design Characteristics
+B-Tree Advantages over Binary Search Tree
+A)Reduced allocations: Each node contains B-1 to 2B-1 elements in a contiguous array, reducing allocations
+by a factor of B
+B)Improved cache efficiency: Contiguous storage improves locality of reference
+C)Tradeoff: Searches perform more comparison on average(B * log(n) vrs log2(n) for Binary Search Tree
+
+Current Implementation
+=Uses naive linear search within nodes(optimal for small nodes with cheap comparisons)
+=Future optimizations may include adaptive search strategies based on B values
+
+Logical Constraints
+-Keys must maintain consistent ordering while in the map
+-Modification of key ordering during map lifetime is a logic error
+-Behaviours from such errors  is specified to be safe(no UB) but may include panics, incorrect results
+
+------------------------------------------------------------------------------------------------------------------------
+Construction Methods
+1)Default allocator
+An empty map with a default allocator
+const fn new() -> BTreeMap<K, V>
+
+2)An empty map with a custom allocator(nightly only)
+fn new_in(alloc: A) -> BTreeMap<K, V, A>
+
+3)In arrays
+fn from(arr: [(K, V); N]) -> BTreeMap<K, V>
+
+4)In iterators
+fn from_iter<T>(iter: T) -> BTreeMap<K, V>
+------------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------------
+Operations
+fn get<Q>(&self, key: &Q) -> Option<&V> = Get value reference by key
+
+fn get_mut<Q>(&mut self, key: &Q) -> Option<&mut V> = Get mutable value by reference by key
+
+fn get_key_value<Q>(&self, k;&Q) -> Option<(&K, &V)> = Get key-value pair
+
+fn contains_key<Q>(&self, key: &Q) -> Bool - Check for key existence
+
+impl Index<&Q> -> &V - Indexing(panics if key not found)
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Element Modification
+i)fn insert(&mut self, key: K, Value: V) -> Result<&mut V, OccupiedError> = Insert key-value pair(returns old value of key inserted)
+
+ii)fn try_insert(&mut self, key: K, value: V) -> Result<&mut V, OccupiedError> = try insert return error if key exists, nightly only
+
+iii)fn remove<Q>(&mut self, key: &Q) -> Option<V> -> = Removes by key(return value if key existed)
+
+iv)fn remove_entry<Q>(&mut self, key: &Q) -> Option<(K, V)> = Remove and return key-value pair
+
+v)fn clear(&mut self) = Remove all elements
+------------------------------------------------------------------------------------------------------------------------
+
+Range Operations
+-fn range<T, R>(&self, range: R) -> Range<'_, K, V> = Gets iterator over range
+
+-fn range_mut<T, R>(&mut self, range: R) -> RangeMut<'_, K, V> = Get mutable iterator over range
+
+-fn split_off<Q>(&mut self, key: &Q) -> BTreeMap<K, V, A> = split map at key
+
+-fn extract_if<F, R>(&mut self, range: R, pred: F) -> ExtractIf<'_, K, V, R, F, A> = Conditional removal in range(nightly only)
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Entry API
+fn entry(&mut self, key: K) -> Entry<'_ K, V, A> = Get entry for in place manipulation
+
+map.entry(key).or_insert(value);
+map.entry(key).or_insert_with(|| computed_value);
+map.entry(key).and modify(|v| * v += 1).or_insert(0)
+------------------------------------------------------------------------------------------------------------------------------
+
+Iterations
+Immutable Iteration
+fn iter(&self) -> Iter<'_, K, V> = Iterate over key-value pairs(sorted by key)
+
+fn keys(&self) -> Keys<'_, K, V> = Iterate over sorted key
+
+fn values(&self) -> Values<'_, K, V> = Iterate over values in key order
+
+Mutable Iteration
+fn iter_mut(&mut self) -> IterMut<'_, K, V> = mutable iteration over key-value pairs
+
+fn values_mut(&mut self) -> ValuesMut<'_, K, V> = mutable iteration over values
+
+Consuming Iteration
+fn into_keys(self) -> IntoKeys<K, V, A> = Consuming key iterator
+
+fn into_values(self) ->IntoValues<K, V, A> = Consuming value iterator
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+First Element Operation
+fn first_key_value(&self) -> Option<(&K, &v)> - get first key value pair
+
+fn first_entry(&mut self) -> Option<OccupiedEntry<'_, K, V, A>> - get first entry for mutation
+
+fn pop_first(&mut self) -> Option<(K, V)> = Remove and return first element
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+Last Element Operation
+fn last_key_value(&self) -> Option<(&K, &V)> = get last key-value pair
+
+fn last_entry(&mut self) -> Option<OccupiedEntry<'_, K, V, A>> - gets the last entry  for mutation
+
+fn pop_last(&mut self) -> Option<(K, V)> = remove and return the last element
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+Cursor API(Nightly Only)
+Lower Bound Cursors
+I)fn lower_bound<Q>(&self, bound: Bound<&Q>) -> Cursor<'_, K, V> = Immutable cursor at lower bound
+
+II)fn lower_bound_mut<Q>(&self, bound: Bound<&Q>) -> CursorMut<'_, K, V, A> Mutable cursor at lower bound
+
+Upper Bound Cursors
+
+I)fn upper_bound<Q>(&self, bound: Bound<&Q>) -> Cursor<'_, K, V> = Immutable cursor at upper bound
+
+II)fn upper_bound_mut<Q>(&mut self, bound: Bound<&Q>) -> CursorMut<'_, K, V, A> = Mutable cursor  at upper bound
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+Utility Methods
+fn len(&self) -> usize - Get the number of elements
+
+fn is_empty(&self) -> bool - Check if the collection is empty
+
+fn append(&mut self, other: &mut BTreeMap<K, V, A>) = Moves all elements from another map
+
+fn retain<F>(&mut self, f:F) = Filter elements in  place
+
+----------------------------------------------------------------------------------------------------------------------------------------
+
+Standard Traits
+Clone and Debug Traits
+impl <K, V, A> Clone where K:Clone, V:Clone
+impl <K, V, A> Debug where K:Debug, V:Debug
+impl<K, V> Default for BTreeMap<K, V>
+impl<K, V, A> Drop where: A:Allocator + Clone
+
+Comparison Traits
+impl <K, V, A> PartialEq where K: PartialEq, V: PartialEq
+impl <K, V, A> Eq where K: Eq, V: Eq
+impl< K, V, A> PartialOrd where K:PartialOrd, V:PartialOrd
+impl<K, V, A> Ord where K: Ord, V:Ord
+
+Hashing
+impl<K, V, A> Hash where K:Hash, V:Hash
+
+Collection Traits
+-Extension from iterators
+impl <K, V, A>Extend<(K, V)> where K: Ord
+impl <'a, K, V, A> Extend<(&'a K, &'a V)> where K: Ord + Copy, V: Copy
+
+-Conversion from arrays
+impl<K, V, const N: usize> From<[(K, V); N]> where K: Ord
+
+Iterator Traits
+impl<'a, K, V, A> IntoIterator for &'a BTreeMap<K, V, A> -Immutable Iteration
+
+impl<'a K, V, A> IntoIterator for &'a mut BTreeMap<K, V, A> - Mutable Iteration
+
+Impl<K, V, A> IntoIterator for BTreeMap<K, V, A> - consuming Iteration
+
+Safety and Concurrency
+Thread Safety
+impl<K, V, A> Send where K:Send, V:Send, A:Send
+impl<K, V, A> Sync where K:Sync, V:Sync, A:Send
+impl<K, V, A> UnwindSafe where A: UnwindSafe, K:RefUnwindSafe, V:RefUnwindSafe
+
+Memory Safety
+I)No undefined behaviour from logical errors
+II)Panic safe operations
+III)Proper cleanup on drop
+
+Performance characteristics
+I)Insertion/Removal: O(log n) average case
+
+II)Search: O(B* log n) comparisons with linear node search
+
+III)Iteration: 0(1) amortized per element O(LOG N) worst-case per element
+
+IV)Range queries: O(log n + k) for k elements in range
+
+

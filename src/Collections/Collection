@@ -1,0 +1,38 @@
+=A collection is a data structure that stores multiple values, often dynamically, and provides an efficient
+way to access, modify and iterate values
+
+Core Traits of Rust Collections
+I)Dynamic sizing: Most collections can grow and shrink at runtime
+II)Ownership aware: They integrate seamlessly with Rust ownership and borrow rules
+III)Type safe: Collections are type-safe, generic allowing one to specify types of
+elements they hold
+IV)Memory-safe: Rust ensures no invalid memory access even with complex operations
+
+Collection Types
+Type                              Description                               Uses
+I)Vec<T>                          Growable array                            Storing a list of Items in Order
+
+II)HashMap<K, V>                  Key-value store                           Caching, Indexing, associative data
+                                  with fast retrieval
+
+III)HashSet<T>                    Unordered set of unique                   Tracking seen items, deduplication
+                                  values
+
+IV)LinkedList<T>                  Doubly-linked list                        Efficient insertions/removal at the middle of
+                                                                            the collection
+
+V)VecDeque<T>                     Double ended Queue                        Queue principle(Fast-In-First-Out)
+
+vi)BTreeMap<K,V>                  Sorted key-value collection               Range queries, ordered iterations
+
+vii)BinaryHeap<T>                 PriorityQueue                             Task Scheduling max and min retrieval
+
+Collections are grouped into
+-Sequences: ordered lists e.c Vec, VecDeque, LinkedList
+-Map: key-value stores (HashMap, BTreeMap)
+-Sets: Unique unordered  value(HashSet, BTreeSet)
+
+
+
+
+

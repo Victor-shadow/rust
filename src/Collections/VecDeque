@@ -1,0 +1,205 @@
+VecDeque<T, A> where A: Allocator Is a double-ended queue implemented with a growable ring buffer
+It provides efficient O(1) insertion and removal from both ends, making it suitable for use
+use as both a queue(First-In-First-Out)  and a stack(Last-In-First-Out)
+
+Key characteristics
+I)Default Usage - push_back to add, pop_front to remove(queue behaviour)
+
+II)Memory layout - Elements are stored in the ring buffer, which may not be contiguous in memory
+
+III)Contiguous Access - Use make_contiguous() to access elements in a single slice
+
+IV)Initialization - Can be created from Arrays using VecDeque::from([...])
+
+------------------------------------------------------------------------------------------------------------------------
+Basic constructors
+Create an empty Deque : VecDeque::new()
+
+A Deque with pre-allocated space : VecDeque::with_capacity(n)
+
+Fallible VecDeque : VecDeque::try_with_capacity(n)
+
+A deque with a custom allocator : VecDeque::new_in(alloc)
+
+A deque with a custom allocator and capacity : VecDeque::with_capacity_in(n, alloc)
+
+------------------------------------------------------------------------------------------------------------------------
+
+Implementation for u8 elements
+i)For u8 elements  VecDeque<u8> has special implementations:
+a)Read trait - Consumes bytes from the front
+
+b)Write trait - Appends bytes to the back
+
+c)ufRead trait - Reads bytes from the front
+
+Performance characteristics
+Insertion/Removal at ends: 0(1) amortized
+Insertion/removal at the middle: 0(n)
+Indexed access:0(1)
+Searching: O(n)  for linear search o(log n) for binary search when sorted
+
+Trait Implementations
+VecDeque implements many standard traits:
+I)Clone, Debug, Default, Eq, Ord, Hash
+
+II)Index, IndexMut
+
+III)FromIterator, Extend
+
+IV)PartialEq with arrays, slices, vec
+
+V)Read/ Write/ BufRead for VecDeque<u8>
+
+Memory Management
+-The RingBuffer implementation means that:
+I)Elements may wrap around the end of the allocated buffer
+
+II)Capacity is automatically managed with geometric growth
+
+III)make_contiguous() can reorganize elements into a contiguous block
+
+
+Error Handling
+-Many operations have fallible versions:
+i)try_with_capacity() for allocation
+
+ii)try_reserve(), try_reserve_exact() for capacity management
+
+Vector Deque Methods
+Capacity Methods
+Method                         Syntax                             Description
+i)capacity                     deque.capacity()                   Returns current capacity
+
+ii)reserve                     deque.reserve()                    Reserves more capacity
+
+iii)reserve_exact              deque.reserve_exact()              Reserves exact capacity
+
+iv)try_reserve                 deque.try_reserve()                Fallible reserve
+
+v)try_reserve_exact            deque.try_reserve_exact()          Fallible exact reserve
+
+vi)shrink_to_fit               deque.shrink_to_fit()              Reduces capacity to fit content
+
+vii)shrink_to                  deque.shrink_to()                  Shrinks to minimum
+
+
+Element Access Methods
+Method                          Syntax                           Description
+I)get                           deque.get(Index)                 Returns Option<&value>
+
+II)get_mut                      deque.get_mut(index)             Returns Option<&mut value)
+
+III)front                       deque.front()                    First element of the deque Option<&value>
+
+IV)back                         deque.back()                     Last element of the deque Option<&value>
+
+V)front_mut                     deque.front_mut()                Mutable first element
+
+VI)back_mut                     deque.back_mut()                 Mutable last element
+
+VII)index                       deque[index]                     Direct index(panics if OOB)
+
+
+Add Elements Operation
+Method                            Syntax                            Description
+I)push_front                      deque.push_front(value)           Adds elements to the front
+
+II)push_back                      deque.push_back(value)            Adds elements to the back
+
+III)insert                        deque.insert(index, value)        Inserts at position
+
+IV)append                         deque.append(&mut deque)          Moves all to the other queue
+
+V)extend                          deque.extend(iterator)            Extends from the iterator
+
+
+Remove Elements Operation
+Method                               Syntax                          Description
+i)pop_front                          deque.pop_front()               Removes front -> Option<value>
+
+ii)pop_back                          deque.pop_back()                Removes back -> Option<value>
+
+iii)pop_front_if                     deque.pop_front_if(predicate)   Conditional remove(nightly)
+
+iv)pop_back_if                       deque.pop_back_if(predicate)    Conditional remove(nightly)
+
+v)remove                             deque.remove(index)             Removes at index -> Option<value>
+
+vi)swap_remove_front                 deque.swap_remove_front(index)  Remove and replace element at the front
+
+vii)swap_remove_back                 deque.swap_remove_back(index)   Remove and replace element at the back
+
+viii)clear()                         deque.clear()                   Removes all elements
+
+ix)truncate()                        deque.truncate(LEN)             Keeps first LEN element
+
+x)truncate_front()                   deque.truncate_front(LEN)       Keeps last LEN elements nightly
+
+Bulk Operations
+Method                                 Syntax                                Description
+I)retain                               deque.retain(Predicate)               Keeps matching elements
+
+II)retain_mut                          deque.retain_mut(predicate)           Keeps mutable version of matching elements
+
+III)resize                             deque.resize(new LEN, value)          Resizes with cloned values
+
+IV)resize_with                         deque.resize_with(LEN, generator)     Resizes with generator
+
+V)split_off                            deque.split_off(index)                Splits into two deque's
+
+VI)drain                               deque.drain(range)                    Removes range -> iterator
+
+Viewing and Slice
+as_slices                              deque.as_slices() -> (&[T], &[T]                Returns two slices
+
+as mut_slices                          deque.as_mut_slices() -> (&mut [T], &mut[T])    Mutable slices
+
+make_contiguous                        deque.make_contiguous() -> &mut[T]              Makes contiguous slice
+
+
+Iteration
+iter                                  deque.iter()                            immutable iterator
+
+iter_mut                              deque.iter_mut()                        Mutable iterator
+
+into_iter                             deque.into_iter()                       Consuming Iterator
+
+range                                 deque.range(RANGE)                      Range-Based Iterator
+
+range_mut                             deque.range_mut(RANGE)                  Mutable range iterator
+
+
+Searching & Sorting
+contains                              deque.contains(&value)                   Checks for value
+
+binary_search                         deque.binary_search(&value)              Binary search sorted
+
+binary_search_by                      deque.binary_search_by(comparator)       With comparator
+
+binary_search_by_key                  deque.binary_search_by_key(Key, Fn)      With Key Extraction
+
+partition_point                       deque.partition_point(predicate)         Finds partition point
+
+Transformation
+rotate_left                           deque.rotate_left(N)                     Rotates left by N
+
+rotate_right                          deque.rotate_right(N)                    Rotates right by N
+
+swap                                  deque.swap(indexA, indexB)               Swaps two elements
+
+Utility Methods
+len                                   deque.len()                              Number of elements
+
+is_empty                              deque.is_empty()                         Checks if empty
+
+allocator                             deque.allocator()                        Returns allocator ref(nightly)
+
+Specialized Method
+Method                                 Syntax                                  Description
+I)read                                 deque.read(&mut BUF)                    Implements the READ trait
+
+ii)write                               deque.write(&mut BUF)                   Implements the WRITE trait
+
+iii)fill_buf                           deque.fill_buf()                        Implements the BufRead trait
+

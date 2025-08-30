@@ -1,0 +1,144 @@
+HashMap<K, V, S> is a hashmap implementation using the quadratic probing and SIMD lookup
+It is part of Rust standard library and provides efficient key-value storage
+with 0(1) time complexity for insertions, deletions and lookups
+
+Key characteristics
+1)Hashing Algorithm
+Default: SipHash 1- 3 provides resistance against HashDos attacks
+Random seeding: Each hash Map instance uses a different random seed
+Customizable: Can use alternative hashing algorithms via the S parameters
+
+Requirements for Keys
+Keys must implement the Eq and Hash Traits
+Consistency requirement k1 == k2 -> hash(k1) == hash(k2)
+Logic errors if keys are modified while in the map such that their hash or equality changes
+
+Implementation details
+Based on Google Swiss Table(Rust port)
+Uses quadratic probing and SIMD lookup for efficiency
+Automatically resizes as needed
+
+Construction Methods
+Default Construction:
+=Creates an empty HashMap with a capacity of 0.(no allocation till the first insertion)
+pb fn new() -> HashMap<K, V, RandomState>
+
+With Capacity:
+pub fn with_capacity(capacity: usize) -> HashMap<K, V, RandomState>
+=Creates an empty HashMap with at least the specified capacity
+
+With Custom Hasher
+pb const fn with_hasher(hash_builder: S) -> HashMap<K, V, S>
+=Creates an empty HashMap using a custom hash builder
+
+With Capacity and Custom hasher
+pb fn with_capacity_and_hasher(capacity: usize, hasher: S) -> HashMap<K, V, S>
+Creates an empty HashMap  with both specified capacity and custom hasher
+
+------------------------------------------------------------------------------------------------------------------------
+Capacity Management methods
+i)capacity() -> usize : Returns the number of elements the map can hold without reallocating(lower bound)
+
+ii)reserve(additional: usize) ->Reserves capacity for at least additional more elements
+
+iii)try_reserve(additional: usize) -> Result<(), TryReserveError> - Fallible version of reserve
+
+iv)shrink_to_fit() - Shrinks capacity as much as possible while maintaining internal rules
+
+v)shrink_to(min_capacity: usize) - Shrinks capacity with a lower limit
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Access Methods
+I)get<Q>(&self, k:&Q) -> Option<&V> - Returns a reference to the value corresponding to the key
+
+II)get_key_value<Q>(&self, k: &Q) -> Option<(&K, &V)> -Returns the key-value pair corresponding to the supplied key
+
+III)get_mut<Q>(&mut self, k: &Q) -> Option<&mut V> - Returns a mutable reference to the value corresponding to the key
+
+IV)get_disjoint_mut<Q, const N: usize>(&mut self, ks: [&Q; N]) -> [Option<&mut V>; N] -Attempts to get a mutable reference to N values at once(panics on duplicate keys)
+
+V)get_disjoint_unchecked_mut<Q, const N: usize>(&mut self, ks: [&Q, N]) -> [Option<&mut V>; N] = Unsafe version of get_disjoint_mut(undefined behaviour with overlapping keys)
+
+VI)contains_key<Q>(&self, k: &Q) -> bool = Returns true if the map contains the specified key
+
+------------------------------------------------------------------------------------------------------------------------
+
+Modification Methods
+i)insert(&mut self, k : K, v: V) -> Option<V> Inserts a key-value pair returning the old value if the key existed
+
+ii)try_insert(&mut self, key: K, value: V) -> Result<&mut V, OccupiedError<'_, K, V>> - Nightly-only method that tries to insert and returns an error if the key exists
+
+iii)remove<Q>(&mut self, k: &Q) -> Option<V> - Removes a key returning the value if it existed
+
+iv)remove_entry<Q>(&mut self, k: &Q) -> Option<(K, V)> - Removes a key returns both key and value if they existed
+
+v)entry(&mut self, key: K) -> Entry<'_, K, V> = Gets the entry for in-place manipulation(or_insert, or_insert_with,)
+
+------------------------------------------------------------------------------------------------------------------------
+
+Iteration Methods
+-keys(&self) -> Keys<'_, K, V> = iterates over the keys in a arbitrary order
+
+-into_keys(self) -> IntoKeys<K, V> = Consuming iterator over keys
+
+-values(& self) -> Values<'_, K, V> = Iterates over the values in arbitrary order
+
+-values_mut(&mut self) -> ValuesMut<'_, K, V> = Mutable iterators over all values
+
+-into_values(self) -> IntoValues<K, V> = Consuming Iterator over all values
+
+-iter(&self) -> Iter<'_, K, V> = Iterates over all the key value pairs
+
+-iter_mut(&mut self) -> IterMut<'_, K, V> =Mutable iterator over all key-value pairs(values mutable, keys immutable)
+------------------------------------------------------------------------------------------------------------------------
+
+Utility Methods
+I)len(&self) -> usize = Returns the number of elements in the map
+
+II)is_empty(&self) -> bool = Returns true if the map contains no elements
+
+III)clear(&mut self) =Clears the map, keeping allocated memory for reuse
+
+IV)drain(&mut self) -> Drain<'_, K, V> = Clears the map returning key-value pairs in an iterator
+
+V)extract_if<F>(&mut self, pred: F) -> ExtractIf<'_, K, V, F> =Creates an iterator that uses a closure to determine which elements to
+remove
+
+VI)retain <F>(&mut self, f: F) = Retains only elements specified by the predicate
+
+VII)hasher(&self) -> &S = Returns a Reference to the map's BuildHasher
+
+---------------------------------------------------------------------------------------------------------------------------
+
+Special methods
+from(arr: [(K, V); N]) -> Self = Converts an array of key-value pairs into a HashMap
+
+from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> HashMap<K, V, S> = Constructs a HashMap from an iterator of key-value pairs
+
+Usage in const and static
+=Normal HashMap::new() cannot be used in const and static due to random seeding
+Alternatives: use lazy lock to retain random seeding
+Use a fixed Hasher(not resistant to HashDoS)
+
+NOTE: Iteration methods takes O(capacity) time instead of O(len) due to visiting empty buckets
+
+Trait Implementations
+1)Clone : Only if K, V and S are Clone
+2)Debug: Only if K and V are Debug
+3)Default: Creates an empty HashMap with a default hasher
+4)Eq/PartialEq: Only if K and V implement the required traits
+5)From/FromIterator: For conversion of arrays to iterators
+6)Index: Allows map[key] syntax(panics if the keys do not exist)
+
+Iterator Traits
+i)IntoIterator implemented for:
+&HashMap - Iter(immutable borrow)
+&mut HashMap - IterMut(mutable values)
+HashMap - IntoIter(consuming)
+
+Auto Traits
+Send/Sync When K, V and S are Send/Sync
+UnwindSafe/RefUnwindSafe: When K, V and S are unwind-safe
+Freeze: When S is freeze
+Unpin:When K,V and S are Unpin

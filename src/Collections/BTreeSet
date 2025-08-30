@@ -1,0 +1,191 @@
+=BTreeSet<T, A> is an ordered set implementation based on a B-Tree data structure
+It maintains elements in a sorted order according to the Ord trait implementation of the element type T
+The allocator parameter A (defaulting to Global) allows for custom memory management
+
+Characteristics
+i)Ordering: Elements are always stored in ascending order(based on Ord trait)
+ii)Uniqueness: Contains only unique elements - duplicates are automatically rejected
+iii)Performance: Operations generally have a O(log n) time complexity
+iv)Safety: Logic errors from modifying elements ordering while in the set are contained
+v)Iteration: Iterators produces elements in a sorted order with amortized constant time per element
+
+
+Construction Methods
+Empty BTreeSet = let mut set = BTreeSet::new();
+
+Array = let mut set = BTreeSet::from([1, 2, 3, 4, 5]);
+
+//Custom allocator
+#![feature(allocator_api)]
+use std::alloc::System;
+let mut set = BTreeSet::new_in(System);
+
+Core Operations
+Element management
+fn insert(&mut self, value: T) -> bool = Adds value to a set
+Returns true if the value is newly inserted, false if it already exists
+Time Complexity: O(log n)
+
+fn remove<Q>(&mut self, value: &Q) -> bool
+=Removes a value from a set if it is present - Returns true if the value was present
+Time Complexity: O(log n)
+
+fn contains<Q>(&self, value: &Q) -> bool = Checks if a set contains a value
+Time Complexity: O(log n)
+
+Entry API
+#![feature(btree_set_entry)]
+fn entry(&mut self, value: T) -> Entry<'_, T, A>
+*provides complex methods for getting, setting, updating and removing elements
+*Returns either OccupiedEntry or VacantEntry
+
+fn get_or_insert(&mut self, value: T) -> &T = Inserts values if not present, then returns references to values in the set
+
+fn get_or_insert_with<Q, F>(&mut self, value: &Q, f:F) -> &T = Inserts values computed from the closure if not present
+
+
+Standard Set Operations
+fn union<'a>(&'a self, other: &'a BTreeSet<T, A>) -> Union<'a T> = Returns iterator over the elements in both sets (no duplicates)
+
+fn intersection<'a>(&'a self, other: &'a BTreeSet<T, A>) -> Intersection<'a, T, A> = Returns an iterator over the elements present in both sets
+
+fn difference<'a>(&'a self, other: &'a BTreeSet<T, A>) -> Difference<'a,  T, A> = Returns iterator over element in self but not in another
+
+fn symmetric_difference<'a>(&'a self, other: &'a BTreeSet<T, A>) -> SymmetricDifference<'a T> = Returns iterator over elements in either set but not both
+
+
+Boolean Set Checks
+fn is_disjoint(&self, other: &BTreeSet<T, A>) -> bool = returns true if sets have no elements in common
+
+fn is_subset(&self, other: &BTreeSet<T, A>) -> bool = Returns true if all the elements of self are contained in other
+
+fn is_superset(&self, other: &BTreeSet<T, A>) -> bool = Returns tru if self contains all elements of other
+
+Element Access
+i)fn first(&self) -> Option<&T> = Returns reference to the smallest element(minimum)
+
+ii)fn last(&self) -> Option<&T> = Returns reference to the largest element(maximum)
+
+iii)fn pop_first(&mut self) -> Option<T> = Removes and returns the smallest element
+
+iv)fn pop_last(&mut self) -> Option<T> = Removes and returns the largest element
+
+Range Queries
+fn range<K, R>(&self, range: R) -> Range<'_, T> = Returns an iterator over a sub-range of elements
+Panics if range start > end or if both bounds are Excluded or equal
+
+for &elem in set.range((Included(&4), Included(&8))) {
+  println!("{elem}");
+}
+
+
+Collection management
+i)fn len(&self) -> usize : Returns number of elements in the set
+
+ii)fn is_empty(&self) -> bool :Returns true if the set contains no elements
+
+iii)fn clear(&mut self) - removes all the elements from the set
+
+iv)fn append(&mut self, other:&mut BTreeSet<T, A>) = Moves all elements from other into self, leaving other empty
+
+v)fn split_off<Q>(&mut self, value: &Q) -> BTreeSet<T, A> = Splits the set into two at the given value, Returns new set
+with all the elements greater than or equal to the value
+
+vi)fn retain<F>(&mut self, f: F) -Retains only elements specified by the predicate
+
+viii)fn iter(&self) -> Iter<'_, T> = Returns the iterator visiting the elements in ascending order
+
+ix)fn into_iter(self) -> IntoIter<T, A> = Creates consuming iterator but moves elements out in ascending order
+
+
+CURSOR API(Nightly only)
+=#![feature(btree_cursors)]
+fn lower_bound<Q>(&self, bound: Bound<&Q>) -> Cursor<'_, T> = Returns cursor pointing at the gap before the smallest element
+greater than the given bound
+
+fn upper_bound<Q>(&self, bound: Bound<&Q>) -> Cursor<'_, T> = Returns cursor pointing at the gap after the greatest element
+smaller that the given bound
+
+Specialized Operations
+i)fn get<Q>(&self, value: &Q) -> Option<&T> = Returns reference to the element equal to the value if any
+
+ii)fn take<Q> (&mut self, value:&Q) -> Option<T> = Remove and return the element equal to the value if any
+
+iii)fn replace(&mut self, value: T) -> Option<T> = Adds a value, replacing existing equal element if any, returning the replaced
+element
+
+Trait Implementation
+Common Traits
+i)Clone: Only if T:Clone and A:Clone + Allocator
+
+ii)Debug: only if T:Debug
+
+iii)Default: Creates empty set
+
+iv)FromIterator: Creates set from iterator
+
+v)extends: Adds multiple elements from the iterator
+
+Set Operation Traits
+*//Bitwise Operators for set operations
+impl<T, A> BitAnd<&BTreeSet<T, A>> for &BTreeSet<T, A>
+impl<T, A> BitOr<&BTreeSet<T, A>> for &BTreeSet<T, A>
+impl<T, A>BitXor<&BTreeSet<T, A>> for &BTreeSet<T, A>
+
+Performance Characteristics
+I)INSERT                    O(log n)
+II)REMOVE                   0(log n)
+III)CONTAINS                0(log n)
+IV)RANGE QUERIES            O(log n) plus O(k) for k elements in range
+V)UNION/INTERSECTION        O(n + m) n =self.len(), m = other.len()
+VI)Iteration                O(N) Amortized constant time per element
+
+Space Complexity
+O(n) space usage
+Generally more memory efficient than hash set for small elements
+
+NOTE;
+=It is critical that Ord and PartialOrd implementations are consistent
+Mismatched implementations can lead to unpredictable behaviour and broken invariants
+
+Problematic Implementation
+impl PartialOrd for Chaos {
+   fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+     Some(self.0.cmp(&other.0).reverse()) //reverse order
+     }
+}
+
+impl Ord for Chaos {
+   fn cmp(&self, other: &Self) -> Ordering {
+   self.0.cmp(&other.0) //Normal order
+   }
+ }
+
+Logic Error safety
+Modifying elements in ways that change their ordering relative to other elements while in the set
+is a logical error. this can only occur through
+i)Interior mutability: (Cell, RefCell)
+ii)Global state
+iii)I/O Operations
+iv)Unsafe code
+
+Such errors may result in panic, incorrect results, or other specified behaviours
+
+Comparison with Other Collections
+HashSet
+=BTreeSet: Ordered, O(log n) operations generally more memory efficient for small elements
+HashSet: unordered 0(1) operations amortized higher memory overhead
+
+Binary Heap
+BTreeSet: Maintains all elements sorted, efficient range queries
+BinaryHeap: PriorityQueue Semantics, only efficient to the largest element
+
+NOTE: Implementation of Extract If
+#![feature(btree_extract_if)]
+let mut set: BTreeSet<i32> = (0..8).collect();
+
+// Extract even numbers
+let evens: BTreeSet<_> = set.extract_if(.., |v| v % 2 == 0).collect();
+
+// Remaining set contains odds
+assert_eq!(set.into_iter().collect::<Vec<_>>(), vec![1, 3, 5, 7]);

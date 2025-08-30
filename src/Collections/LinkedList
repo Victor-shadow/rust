@@ -1,0 +1,159 @@
+=A linked list is a linear data structure made up of nodes, where each node contains a value and a reference
+(pointer) to the next node and optionally the previous one depending on the type
+=It is a doubly linked list with owned nodes. Each element(node) is allocated on the heap
+and the list allows efficient insertion and removal at both ends
+
+Rust Supports two main types:
+i) Singly LinkedList
+Each node points to the next node
+Traversal is one way
+Often implemented manually using Option<Box<Node<T>>>
+
+ii)Doubly Linked List
+Each node points to the next and previous node
+Allows bi directional traversal
+Provided by Rust standard library via std::collections::LinkedList
+
+Type: pub struct LinkedList<T, A = Global> where A: Allocator, {/* private fields */}
+
+Key Characteristics
+Doubly-linked: Each node contains a pointer to both the next and previous node, enabling bidirectional traversal
+Ownership: the list owns its node; when the list is dropped, all nodes are deallocated
+Allocator Supporter: Supports custom allocators(nightly only feature via allocator_api)
+
+Performance and Caveats
+Performance:
+i)Push/Pop Operations: 0(1) for both ends (push_front,push_back,pop_front, pop_back)
+
+ii)Append: 0(1) time and memory for appending another list(append method)
+
+iii)Splitting: 0(n) for split_off at index
+
+iv)Access by index 0(n)(linear time) as traversal from head to tail is required
+
+Cache performance: Generally worse than array-based structures(Vec VecDeque) due to non-contiguous memory layout
+
+Use Cases of LinkedList
+1)Frequent Insertions/ Removal at both Ends: Ideal for implementing queue's and deque
+2)Splitting and Merging Lists: Efficient append operation moves all the elements from another list in 0(1) time
+3)Used for understanding pointers, ownerships and  borrowing in Rust
+4)Niche Scenarios:
+i)Lock-free concurrent data structures
+ii)Kernel/embedded systems with intrusive lists
+iii)Functional programming paradigms where persistence is needed
+
+------------------------------------------------------------------------------------------------------------------------
+LinkedList Methods
+Method                                       Description                                Time Complexity
+new()                                        Creates an empty LinkedList                0(1)
+
+new_in(alloc: A)                             Creates an empty list with a               0(1)
+                                             custom allocator
+
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+Basic Operations
+Method
+push_front(&mut self, elt:T) -> Adds elements to the front - 0(1)
+
+pop_front(&mut self) -> Option<T> -> Removes and returns the front element - 0(1)
+
+push_back(&mut self, elt:T) -> Adds an element to the back - 0(1)
+
+pop_back(&mut self ) -> Option<T> = Removes and returns the back element - 0(1)
+
+append(&mut self, other: &mut LinkedList<T>) = Moves the elements from other to the end of self. other becomes empty - 0(1)
+
+------------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------------
+Inspection and Access
+-front(&self) -> Option<&T> = Returns a reference to the front element - 0(1)
+
+-front_mut(&mut self) -> Option<&mut T> = Returns a mutable reference to the front element - 0(1)
+
+-back(&self) -> Option<&T> = Returns a reference to the back element - 0(1)
+
+-back_mut(&mut self) -> Option<&mut T> = Returns a mutable reference to the back element - 0(1)
+
+-contains(&self, x:&T) -> bool = Returns true if a list contains an element equal to x - 0(n)
+
+-is_empty(&self) -> bool = Returns true if the list is empty - 0(1)
+
+-len(&self) -> usize = Returns the number of elements  - 0(1)
+------------------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------------
+Iteration
+-iter(&self) -> Iter<'_, T> = Returns a forward iterator yielding immutable references
+
+-iter_mut(&mut self) -> IterMut<'_,T> = Returns a forward iterator yielding mutable references
+
+-into_iter(self) -> IntoIter<T, A> = Consumes the list into an iterator yielding elements by value
+-------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+List Manipulation
+clear(&mut self) - Removes all elements
+
+split_off(&mut self, at:usize) -> LinkedList<T, A> = Splits the list at index at returning a new list
+containing elements  from at to the end. Panics i > len
+
+remove(&mut self, at:usize) -> T = Removes and returns the element at index at (nightly only, panics if  at >= len)
+
+retain<F>(&mut self, f: F) - Retains only elements for which the predicate T returns True (nightly only)
+
+extract_if<F>(&mut self, filter: F) -> ExtractIf<'_, T, F, A> = Creates am iterator that removes and yields  elements based on
+a filter
+------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------------------------------------
+Cursor Methods
+cursor_front(&self) -> Cursor<'_, T, A> = Returns a cursor pointing to the front element(or "ghost" if empty)
+
+cursor_front_mut(&mut self) -> CursorMut<'_, T, A> = Returns a mutable cursor at the front
+
+cursor_back(&self) ->Cursor<_, T, A> = Returns a cursor pointing to the back element
+
+cursor_back_mut(&mut self) -> CursorMut<'_, T, A> = Returns a mutable cursor at the back
+------------------------------------------------------------------------------------------------------------------------
+
+
+Trait Implementations
+i)Clone: Only if T and A are clone
+
+ii)Debug: Only if T is debug
+
+iii)Default: Creates an empty list
+
+iv)Drop: Cleans up all the nodes
+
+v)Extend: from both T and &T where(T: Copy)
+
+vi)From<[T; N]> Creates a list from an array
+
+vii)FromIterator<T> ; collects an iterator into a list
+
+viii)Hash: Only if T is Hash
+
+ix)IntoIterator: For &LinkedList, &mut LinkedList, and LinkedList by value
+
+x)Ord, PartialOrd, Eq, PartialEq: Only if T implements the corresponding trait
+
+------------------------------------------------------------------------------------------------------------------------
+
+Pitfalls and Considerations
+i)Ownership and Borrowing: Implementing custom linked lists in Rust is notoriously challenging due to
+ownership rules. Often requires unsafe code or smart pointers like Rc<RefCell<Node>> for shared ownership and
+mutability which incurs runtime overhead
+
+ii)Memory Overhead: Each node has the overhead of two pointers(prev and next) plus the metadata of the allocation, for small elements
+this can be significant
+
+iii)Cache Locality:  Nodes are allocated separately, leading to potential cache misses
+
+iv)Alternative Structures; In many cases, VecDeque(a double-ended queue implemented with a growable ring buffer) is recommended over a linked
+list for better overall performance

@@ -1,0 +1,177 @@
+=BinaryHeap<T, A> is a priorityQueue implementation using a binary heap data structure
+By default, it is a max heap where the largest element is always at the root. The collection guarantees
+that the heap invariant is maintained as long as the elements  don't change their relative ordering
+while in the heap
+
+Key characteristics
+I)Max heap by default(largest element at the root)
+II)Type parameters:
+T: Element type (must implement Ord)
+A: Allocator type(defaults to Global)
+
+Time Complexities
+push: 0(1) - amortized
+pop: O(log n)
+peek: O(1)
+
+Memory: uses a vector internally for storage
+
+Important variant
+=It is a logic error for an item to be modified  in such a way that the ordering relative to any other item changes
+while it is in the heap. This can only happen through:
+I)Interior mutability
+II)Global state
+III)I/O Operations
+IV)Unsafe code
+
+Construction Methods
+Default Constructors
+//Creates an empty max-heap
+let mut heap = BinaryHeap::new();
+let mut heap = BinaryHeap::<i32>::new();
+
+With Capacity
+Pre allocation of capacity : let mut heap = BinaryHeap::with_capacity(100);
+
+Existing data
+//From Array
+let heap = BinaryHeap::from([100, 200, 300]);
+
+//From Vector
+let vec = vec![100, 200, 300];
+let heap = BinaryHeap::from(vec);
+
+With Custom Allocator
+#![feature(allocator_api)]
+use std::alloc::System;
+
+let mut heap = BinaryHeap::new_in(System);
+let mut heap = BinaryHeap::with_capacity_in(100, System);
+
+Core Operations
+Adding Elements
+fn push(&mut self, item: T)
+-Adds an element to the heap
+-Maintains heap invariant by sifting up
+-Amortized O(1) time complexity
+
+Removing Elements
+fn remove(&mut self) -> Optional<T>
+-Removes and returns the largest element
+-Returns None if the heap is empty
+-O(log n) time complexity
+
+Accessing Elements
+fn peek(&self) -> Option<&T>
+-Returns a reference to the largest element without removing it
+O(1) time complexity
+
+fn peek_mut(&self) -> Option<PeekMut<'_, T, A>>
+-Returns mutable reference to the largest element
+-If modified, automatically maintains the heap invariant
+0(1) If not modified, O(log n) if modified
+
+Inspection Methods
+Capacity Management
+fn capacity(&self) -> usize = Current allocated capacity
+
+fn reserve(&mut self, additional: usize) = Reserves capacity for more elements
+
+fn reserve_exact(&mut self, additional:usize) = Reserves minimum required capacity
+
+fn shrink_to_fit(&mut self) = Reduces capacity to fit current size
+
+fn shrink_to(&mut self, min_capacity: usize) = Reduces capacity with lower bound
+
+Size Information
+fn len(&self) -> usize = Returns the number of elements
+
+fn is_empty(&self) -> bool = True if the heap is empty
+
+Conversion Methods
+fn into_vec(self) -> Vec<T, A> = Consumes heap, returns underlying vector in arbitrary order
+
+fn into_sorted_vec(self) -> Vec<T, A> = Consumes heap, returns sorted vector(ascending order)
+
+To Slices
+fn as_slice(&self) -> &[T] = Returns a slice of all values in arbitrary order
+
+Bulk Operations
+Combine Heaps
+fn append(&mut self, other: &mut BinaryHeap<T, A>) = Moves all elements from other into self, leaves other empty
+
+Element Removal
+fn clear(&mut self) = Removes all the elements
+
+fn drain(&mut self)  -> Drain<'_, T, A> = Clears heap, returns iterator over removed elements
+
+fn drain_sorted(&mut self) -> DrainSorted<'_, T, A> = Clears heap, returns iterator in heap order (sorted)
+
+Filtering
+fn retain<F>(&mut self, f:F)
+where F: FnMut(&T) -> bool,  = Retains elements matching predicate
+
+Iteration
+Immutable Iteration - fn iter(&self) -> Iter<'_ , T> = Returns iterator over all the values in arbitrary order
+
+Consuming Iteration
+//IntoIterator Implementation
+for item in &heap {} //Iterates by reference
+for item in heap {} //Consumes heap, iterates by value
+
+fn into_iter_sorted(self) -> IntoIterSorted<T, A> //Consumes heap, returns iterator in heap order (sorted)
+
+Min Heap Implementation
+-Wrap elements in reverse or implement custom Ord
+
+Error Handling
+Fallible Allocation
+fn try_reserve(&mut self, additional: usize) -> Result<(), TryReserveError> = Tries to reserve capacity
+
+fn try_reserve_exact(&mut self, additional: usize) -> Result<(), TryReserveError> = Tries to reserve exact capacity
+
+Allocator access
+=fn allocator(&self) -> &A: Returns reference to underlying allocator
+
+Trait Implementation
+i)Clone: Only if T:Clone and A:Clone + Allocator
+
+ii)Debug; Only if T:Debug
+
+iii)Default: Creates empty Heap
+
+iv)FromIterator: Creates iterator from heap
+
+v)Extend: Adds multiple elements  from the iterator
+
+
+Conversion Traits
+impl <T, A> From<Vec<T, A>> for BinaryHeap<T, A>
+
+impl<T,A> From<BinaryHeap<T, A>> for Vec<T, A>
+
+impl<T, const N: usize> From<[T:N]> for BinaryHeap<T>
+
+Memory Safety and thread Safety
+Auto Traits: Send and sync when T and A are send / sync
+Unwind Safe: When T and A are unwind safe
+No undefined behaviour even if heap variant is violated(though behaviour is unspecified)
+
+Performance Characteristics
+Time Complexity
+Operation                               Complexity                          Notes
+push                                    0(1)                                Amortized, worst case O(n)
+
+pop                                     0(log n)
+
+peek                                    0(1)
+
+into_sorted_vec                         0(n log n)
+
+append                                  0(n + m)                          n = self.len() m = other.len()
+
+
+Space Complexity
+O(n) space usage
+Growth strategy: doubles capacity when needed (like Vec)
+

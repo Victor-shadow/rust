@@ -1,0 +1,173 @@
+=Vec<T> is Rust contiguous array type, commonly referred to as "Vector"
+
+Characteristics
+i)Dynamic sizing: unlike arrays, vectors can grow or shrink as needed
+ii)Heap Allocated: Elements are stored on the heap unless capacity is zero
+iii)Type Homogeneity: All elements must be of the same type T
+iv)Memory Layout: Represented as a (Pointer, Capacity, length) triplet
+
+Initialize vectors
+i) Type Annotation
+let mut vector: Vec<i32> = Vec::new();
+
+ii)Capacity
+let mut vec = Vec::with_capacity(10);
+
+iii)vec! macro
+let vec = vec![100, 200, 300]; //vec![1, 2, 3]
+let vec = vec![0; 5]; //vec![0, 0, 0, 0, 0];
+
+Capacity Management
+Capacity: Total allocated space for future elements
+Length: Actual number of elements currently stored
+Vectors actually reallocate when length exceeds capacity
+
+Element Access
+Indexing
+let v = vec![1, 2, 3];
+let second = v[1]; //Panics if index is out of bounds
+
+Safe Access Methods
+//Returns Option<&T>
+if let Some(element) = v.get(2){
+  println!("{}", element);
+}
+
+//Returns Option<&mut T>
+if let Some(element) = v.get_mut(2){
+*element = 42
+}
+
+//Adding Elements
+let mut v = Vec::new();
+v.push(1); //append at end
+v.insert(1, 2);//Insert at index
+
+//Remove Elements
+let mut v = vec![1, 2, 3];
+let last = v.pop(); //removes and returns last element
+let removed = v.remove(0); //removes and returns element at index
+v.truncate(2); //shortens to a specified length
+v.clear(); //Removes all elements
+
+//Specialized Operations
+v.swap_remove(); //Removes by swapping with the last element
+v.retain(|x|*x >1); //keeps only elements satisfying predicate
+v.dedup() //Removes consecutive duplicates
+
+Capacity Methods
+=let mut v = Vec::with_capacity(10);
+v.reserve(5);//ensures capacity for additional elements
+v.reserve_exact(5); //Minimally increases capacity
+v.shrink_to_fit(); //reduces capacity to match length
+v.shrink_to(5); //shrinks capacity with lower bound
+
+Conversion methods
+let v = vec![1, 2, 3];
+let boxed_slice: Box<[i32]>= v.into_box_sliced(); //drop excess capacity
+
+Immutable iteration
+let v = vec![1, 2, 3];
+for element in &v {
+println!("{}", element);
+}
+
+//using iterators
+let doubled: Vec<i32> = v.iter().map(|x| x*2).collect();
+
+Mutable iteration
+for element in &mut v{
+    *element *= 2;
+}
+
+Slicing and Views
+let v = vec![1, 2, 3, 4, 5, 6, 7];
+let slice: &[i32] = &v[1..4]; //immutable slice
+let mut_slice: &mut [i32] = &mut v[1..4]; //mutable slice
+
+//method to get slice
+let full_slice = v.as_slice();
+let full_mut_slice = v.as_mut_slice();
+
+//Splitting and Joining
+let mut v = vec![1, 2, 3, 4, 5];
+let other = vec![6, 7];
+
+v.append(&mut other); //Moves all the elements from other
+v.extend([8, 9]); //adds elements from iterator
+
+let split = v.split_off(3); //Splits at index, returns a Vec
+
+//Searching and Sorting
+let mut v = vec![5, 2. 4, 1, 3];
+v.sort(); //stable sort
+v.sort_unstable(); //faster unstable sort
+v.sort_by_key(|x| x.abs()); //sort with key fn
+
+let index = v.binary_search(&3); //Binary Search in a sorted vec
+
+//Partitioning
+let v = vec![1, 2, 3, 4, 5, 6];
+let (even, odd): (Vec<i32>, Vec<i32>) = v.into_iter().partition(|x| x % 2 == 0);
+
+Conversion Methods
+-From arrays and slices
+let from_slice = Vec::from(&[1, 2, 3][...]);
+let from_array = Vec::from([1, 2, 3]);
+
+-From iterators
+let from_iter: Vec<i32> = (0..5).collect()
+
+//From String
+let byte_vec = Vec::from("rust".as_bytes());
+
+//To boxed slice
+let boxed_slices = v.into_boxed_slice();
+
+//To String
+let string = String::from_utf8(v).ok(); //From Vec<u8> to String
+
+Raw Pointer Access
+let v = vec![1, 2, 3];
+let ptr = v.as_ptr();//Immutable raw pointer
+let mut ptr = v.as_mut_ptr(); //Mutable raw pointer
+
+Unsafe Construction
+unsafe {
+  let rebuilt = Vec::from_raw_parts(ptr, length, capacity);
+}
+
+Zero_Sized Type Vectors
+let v: Vec<()> = Vec::new();
+assert_eq!(v.capacity(), usize::MAX); //no allocation needed
+
+Custom Allocators
+#![feature(allocator_api)]
+use std::alloc::System;
+
+let mut v: Vec<i32>, _> = Vec::new_in(System);
+v.push(1);
+
+Performance Characteristics
+I)Amortized 0(1) push: Most push are constant time
+
+II)O(n)insertion/removal: Linear time for middle operations
+
+III)Exponential growth: Capacity typically doubles when reallocation is needed
+
+Best Practices
+i)Prefer get() over indexing when an index might  be out of bounds
+
+ii)Use extend() instead of multiple push() calls for better performance
+
+iii)Consider into_iter() when one needs ownership of elements
+
+iv)Use vec::with_capacity() when the expected size is known
+
+
+
+
+
+
+
+
