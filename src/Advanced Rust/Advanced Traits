@@ -1,0 +1,167 @@
+Associated Types
+=Associated types connect a type placeholder with a trait such that the trait method definitions can use
+these placeholder types in their signatures
+=The implementor of a trait will specify the concrete type to be used instead of a placeholder
+type for that particular implementation. One can define a trait that uses some types without exactly needing to know what
+those types are until the trait is implemented
+=An example of a trait with an associated type is the Iterator trait that is provided by the standard
+library
+The associated type is Item and stands in for the type of the values the types implementing Iterator
+trait is iterating over
+
+The definition of the Iterator trait:
+pub trait Iterator {
+type Item;
+
+fn next(&mut self) -> Option<Self::Item>;
+}
+
+=The type Item is a placeholder, and the next method definition shows that it will return values of type Option<Self::Item>
+Implementors of the Iterator trait will specify the concrete type forItem, and the next method will return an Option
+containing the value of that concrete type
+
+Implementation of the Iterator trait
+src/lib.rs
+impl Iterator for Counter {
+   type Item = u32;
+
+   fn next(&mut self) -> Option<Self::Item>{
+    // --snip--
+}
+Using Generics
+pub trait Iterator<T> {
+fn next(&mut self) -> Option<T> {
+
+}
+The difference is that when using Generic types, we must annotate the types in each implementation
+because one can also implement the Iterator<String> for Counter or any other type one could have multiple implementations
+of Iterator for counter. In other words, when a trait has a generic parameter, it can be implemented for a type
+multiple times, changing the concrete types of the generic type parameters each time. When one uses next method
+on Counter, one has to provide type annotation to indicate which implementation of Iterator to be used
+
+With associated types , one does not need to annotate types because we cannot implement a trait on a type multiple
+times.One can choose what type of Item will be only once, because there can be only one impl Iterator for counter. We do not have to specify
+that an iterator of u32 values is needed everywhere that one calls next on Counter
+=Associated types also become part of the trait contract: Implementors of a trait must provide a type to stand
+in for the associated type placeholder
+Associated types often have a name  that describes how the type will be used, and documenting the associated types in the API documentation
+is good practice
+
+Default Generic Type Parameters and Operator Overloading
+When we use generic type parameters, we can specify a default concrete type for the generic type
+This eliminates the need for implementors of a trait to specify the concrete type if the default type works
+You specify a default type when declaring a generic type with
+*<PlaceholderType=ConcreteType> syntax
+This technique is useful in situations of Operator overloading in which the behaviour of an operator
+is customized such as (+ operator)
+
+Rust does not allow one to create their own operators or overload arbitrary operators
+One can only overload the operations and corresponding traits listed in std::ops by implementing the traits
+associated with the operator
+
+The default generic type code for the Add trait
+trait Add<Rhs=self> {
+  type Output;
+
+  fn add(self, rhs: Rhs) -> Self::Output;
+}
+
+A trait with one method and an Associated type. The new part is Rhs =self: this syntax is called default type Parameters
+The Rhs generic type parameters("right hand side") defines the type of the rhs parameter
+in the add method. If one does not specify the concrete type for Rhs, when the Add trait is implemented
+the type of Rhs will default to Self, which will be type implemented on the Add trait
+
+When implementing the Add trait for Point , we used the default for Rhs because we want to add two point instances
+
+Implementing the Add trait where Rhs type is Customized
+There are two structs Millimeters and Meters, holding values in different units. This thin wrapping of an existing
+type in another struct is known as the new Type Pattern
+Adding of values in millimeters to values in meters and have the implementation of Add do the conversion
+correctly
+
+src/lib.rs
+use std::ops::Add;
+
+struct Millimeters(u32);
+struct Meters(u32);
+
+impl Add<Meters> for Millimeters {
+type Output = Millimeters;
+
+fn add(self, other: Meters) -> Millimeters {
+  Millimeters(self.0 + (other.0 * 1000))
+}
+
+To add Millimeters and Meters, we specify impl Add<Meters> to set the values of the Rhs type parameter
+instead of using the default of Self
+
+One uses default type parameters in two main ways:
+i)To extend a type without breaking existing code
+ii)To allow customization in specific cases most users won't need
+
+The standard library's Add trait is an example of the same purpose: usually one would add two like types
+but the Add trait provides the ability to customize beyond that. Using a default type parameter in Add trait definition
+means  one does not have to specify the extra parameter most of the type
+The first purpose is similar to the second but in reverse; If one wants to add a type parameter to an existing trait
+you can give it default to allow extension of the functionality of the trait without breaking
+the existing implementation code
+
+Disambiguating Between methods with the Same name
+Nothing in Rust prevents a trait from having a method with the same name as another trait's method
+nor does Rust prevent one from implementing both traits as one type. It is also possible to implement a method
+directly on a type with the same name as methods from traits
+When calling methods with the same name, you need to tell Rust which one is to be used
+NOTE: Associated functions that are not methods, do not have a self parameter. When there are multiple types or traits
+that define non-method functions with the same function name. Rust doesn't always know
+which type one means unless one uses a fully qualified syntax
+
+A fully qualified syntax is defined as:
+<Type as Trait>::function(receiver_if_method, next_arg,...),
+
+=For associated functions that are not methods, there would not be a receiver: there would be only a list
+of arguments
+One can use fully qualified syntax everywhere that you call functions or methods. However, you are allowed to omit any part
+of the syntax that Rust can figure out from other parts of the program
+This syntax is suitable where there are multiple implementations that use the same name and Rust needs help to identify which
+implementations to be called
+
+Super traits
+Sometimes one might write a trait definition that depends on another trait; for a type to implement the first trait
+you want to require that type to also implement the second trait. One would do this  so that the trait definition
+can make use of the associated items of the second trait. The trait your trait definition relies on is called a super trait
+of your trait
+
+Implementing OutlinePrint on a type that does not implement Display such as the Point struct
+struct Point {
+  x: i32,
+  y: i32,
+}
+
+impl OutlinePrint for Point {}
+
+An error is got saying Display is required but not implemented
+To fix this implement Display on Point and satisfy the constraint the OutlinePrint requires
+
+src/main.rs
+use std::fmt;
+
+impl fmt::Display for Point {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+  write!(f, "({}, {})", self.x, self.y)
+  }
+}
+Then implementing the OutlinePrint trait on Point compiles successfully, and one can call outline_print
+trait on any Point instance to display it within an outline with asterisks
+
+Using the New type Pattern to Implement External Traits on External Types
+=The orphan rule states that  we are only allowed to implement a trait on a type if either the trait or the type
+or both are local to the crate
+It is possible to get over this restriction using the new type pattern which involves creating a new type in a tuple struct
+The tuple struct will have only one field and be a thin wrapper around the type for which one wants to implement
+a trait
+Then the wrapper type is local to our crate, and the trait can be implemented on the wrapper
+New type is a term that originates from the Haskell language. There is no runtime performance penalty for using this
+pattern, and the wrapper type is elided at compile time
+
+NOTE: The New type is also useful when traits are not involved
+

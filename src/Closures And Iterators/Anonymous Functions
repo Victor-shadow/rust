@@ -1,0 +1,132 @@
+=Rust closures are anonymous functions that can be saved in a variable or pass as arguments
+to other functions
+=One can create closures in one place and then call the closure elsewhere to evaluate it in a different
+context
+=Unlike functions, closures can capture values from the scope in which they are defined
+
+Closures Type Inference and Annotation
+=Closures do not require one to annotate the type of parameters or the return value  like fn
+functions do
+=Type annotations are required on functions because the types are part of an explicit interface exposed
+to users
+=Closures on the other hand, are not used in an exposed interface, they are stored in variables and used without
+naming them and exposing them to users  of the library
+=Closures are typically short and relevant only within a narrow context rather than in an arbitrary scenario. Within these
+limited contexts, the compiler can infer the type of parameters and the return type, similar to how it is able to infer
+these types of most variables(these are rare cases where the compiler needs the closure type annotations too)
+=As with variables,we can add type annotations if one wants to increase explicitness and cost of being more verbose than is
+strictly necessary
+
+Closures stored in a Variable
+let expensive_closure = |num:i32| -> u32 {
+   println!("calculating slowly...");
+   thread::sleep(Duration::from_secs(2));
+   num
+};
+
+With type annotations added, the syntax of closures look much similar to syntax of functions
+=Closures are similar to function syntax except for the use of pipes and the amount of syntax which is
+optional
+
+fn add_one_v1  (x: u32) -> u32 { x + 1} //a function definition
+let add_one_v2 = |x: u32| -> u32 {x + 1} //fully annotated closure definition
+let add_one_v3 = |x|   u32{x + 1} //closure definition without annotation
+let add_one_v4 = |x|  x + 1; // closure body with an expression
+
+For closure definitions, the compiler will infer one concrete type for each of their parameter
+and for their return value
+
+Calling a closure whose types are inferred with two different types
+let example_closure = |x| x;
+let s = example_closure(String::from("Rust"));
+let n = example_closure(5);
+
+The first time we call example_closure with the String value, the compiler infers the type of x
+and the return type of Closure is String
+These types are then locked into the closure in example_closure, and we get an error when we try to use a different type
+with the same closure
+
+Capturing References or Moving Ownership
+=Closures can capture their values from the environment in three ways which directly map to the three ways a function can take a parameter: borrowing
+immutably, borrowing mutably and taking ownership
+The Closure will decide which of these to use based on what the body of the function does with the
+captured values
+
+*A closure that captures an immutable reference to the vector named list because it only needs an immutable
+an immutable reference to print the value
+If one has to force a closure to take ownership of the values it uses in the environment even though the body
+of the closure that does not strictly need ownership, you can use the move keyword before the parameter list
+-This technique is most useful when passing a closure to a new thread to move the data so that it is owned
+by the new thread
+
+Moving Captured Values Out of Closures and the Fn Traits
+=Once a closure has captured a reference or captured ownership of a value from the environment where the closure
+is defined,(thus affecting what, if anything, is moved into the closure) the code in the body of the closure
+defines what happens to the references or values when the closure is evaluated later
+(thus affecting what, if anything is moved out of the closure)
+A closure body can do any of the following:
+i)Move a captured value  out of the closure
+ii)mutate the captured value
+iii)neither move nor mutate the captured value
+iv)capture nothing from the environment
+
+The way a closure captures and handles values from the environment affects which traits the closure implements
+and traits are how functions and structs can specify what kinds of closures they can use
+Closures will automatically implement one two or all three of this Fn traits, in an additive fashion
+depending on how the closure body handles the values:
+1. FnOnce applies to closures that can be called once. All closures at least implement this trait because all closures
+can be called. A closure that moves captured values out of its body will only implement FnOnce and none of the other Fn traits
+because it can be called only once
+2. FnMut applies to closures that do not move captured values out of their body but that might mutate the captured
+values. These closures can be called more than once
+3. Fn applies to closures that do not move captured values out of their body and that don't mutate captured values,
+as well as closures that capture nothing from their environment. These closures can be called more than once without mutating their
+environment, which is important in cases such as calling a closure multiple times concurrently
+
+NOTE: If what is needed does not require capturing a value from the environment, we can use the name of the function rather than  a closure
+where we need something that implements one of the Fn traits:
+*On an Option<Vec<T>> value we could call unwrap_or_else(Vec::new) to get a new empty vector if the value is None
+The compiler automatically implements whichever of th Fn Traits is applicable for a function definition
+
+Standard Library sort_by_key
+=It uses FnMut instead of FnOnce for the trait bound. The closure gets one argument in the form of a reference to the current item
+in the slice being considered and returns a value of type K that can be ordered
+=The reason why sort_by_key is defined to take FnMut closure is that it calls the closure multiple times
+one for each item in the slice
+
+FnOnce Trait
+#[derive(Debug)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+fn main(){
+    let mut list = [
+        Rectangle { width: 10, height: 1},
+        Rectangle { width: 3, height : 5},
+        Rectangle {width: 7, height: 12},
+    ];
+
+    let mut sort_operations = vec![];
+    let value = String::from("closure called");
+
+    list.sort_by_key(|r| {
+        sort_operations.push(value);
+        r.width
+    });
+    println!("{list:#?}");
+
+}
+//This is a contrived convoluted way(that does not work) to try and count the number of times sort_by_key
+//calls the closure when sorting the list
+//This code attempts to do this counting by pushing value -a String from the closure environment - into the sort operations
+//vector. The closure captures value and then moves value out of the closure by transferring ownership to value
+//to sort_operations vector
+//This closure can be called once; trying to call it a second time would not work because value would no longer be in the environment
+//to be pushed in the sort_operations again. Therefore, this closure only implements the FnOnce
+//Compiling this code generates an error that value can't be moved out of the closure because the closure must implement FnMut
+
+
+
+

@@ -1,0 +1,30 @@
+=Threads provide one approach to concurrency
+Threads are also and only option when the operating system and hardware support them
+=The async model provides a different- and ultimately complementary- set of tradeoffs
+In the async model, concurrent operations do not require their own threads. Instead, they can run on tasks
+as when one uses trpl::spawn_task to kick off work from a synchronous function in streams
+=A task is similar to a thread, but instead of being managed by the operating System, it is managed
+by the library level code: the runtime
+=A stream can be built by using an async channel and spawning an async task that could be called
+from synchronous code
+
+Threads act as a boundary for sets of asynchronous operations; concurrency is possible  both between and within
+tasks, because a task can switch between futures in its body. Finally, Futures are Rust's most granular unit of concurrency
+and each future may represent a tree of other futures. The runtime -specifically - its executor manages its
+tasks, and tasks manage futures. In that regard, tasks are similar to lightweight , runtime managed threads
+with added capabilities that come from being managed by a runtime instead of by the Operating System
+Threads run to completion without being interrupted except by the Operating System Itself. That is they do not
+have no build support for intratask concurrency the way futures do
+Threads in Rust also have no mechanism for cancellation, They have no native equivalent to futures
+
+Tasks give one additional control over futures, allowing one to choose how to group them and where to
+group them
+Tasks can at least in some runtimes be moved around between threads
+The runtime in use including spawn_blocking and spawn_task functions are multithreaded by default
+Many runtimes use an approach called work stealing to transparently move tasks around between threads
+based on how currently threads are being utilized to improve the systems overall performance. That approach
+actually requires threads and tasks and therefore futures
+ *If work is parallelizable such as processing a bunch of data where each part can be processed separately, threads are a better
+ choice
+ *If the work is very concurrent, such as handling messages from a bunch of different sources that may come in different intervals
+ or different rates, async is a better choice

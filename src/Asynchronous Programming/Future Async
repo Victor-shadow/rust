@@ -1,0 +1,100 @@
+=The key elements of asynchronous programming in Rust are futures  and Rust's async and
+await keyword
+=A future is a value that might not be ready now but will be ready at some point in the future
+Rust provides a Future trait as a building block so that different async operations can be implemented
+with different data structures but with a common interface
+=In Rust, futures are types that implement the Future trait. Each future holds its own information
+about the progress that has been made and what "ready" means
+
+=One can apply the async keyword to blocks or functions, to specify that they can be interrupted and
+resumed. Within an async block or async function, you can use the await keyword to await a future
+(wait for it to be ready) Any point where you await a future within an async block or function is a potential
+spot for that async block or function to pause and resume
+=The process of checking with a future  to see if its value is available yet is called polling
+
+When writing async in Rust, we use async and await keywords most of the times. Rust compiles
+them into equivalent code using the Future trait much as it compiles the for loops into equivalent
+code using the Iterator trait
+Since rust provides the Future trait, one can also implement it  for one own data type
+Most of the functions return types with their own implementation of the Future trait
+
+=The future crate is used mostly for asynchronous code and Tokio is the most widely used async runtime
+for web applications
+
+=Futures in Rust are lazy, they don't do anything until one asks them to using the await keyword
+The laziness allows rust to avoid running async code until it is actually needed
+
+NOTE:Rust's await keyword goes after the expression you are awaiting for not before it
+Therefore, it is a postfix keyword. One is able to use chains of methods
+*let response = trpl::get(url).await().output().await;
+
+When Rust sees a block marked with the async keyword, it compiles it into a unique, anonymous data type
+that implements the Future trait. When it sees a function marked with async, it compiles it into a non-sync
+function whose body is an async block
+=An async function's return type is the type of anonymous data type the compiler creates for that async block
+
+Writing an async fn is equivalent to writing a function that returns a future of the return type
+use std::future::Future;
+use trpl::Html;
+
+fn response_message(url: &str) -> impl Future<Output = Option<String>> {
+ async move {
+   let output = trpl::get(url).await.output().await;
+   Html::parse(&output)
+   .select_first("title")
+   .map(|title| title.inner_html())
+   }
+ }
+
+-It uses the impl Trait syntax
+-The returned trait is a future with an associated type of Output. The Output type is Option<String>
+which is the same as the original return type from the async fn
+-All of the code called in the body of the original fn is wrapped in an async move block
+Remember that blocks are expressions. This whole block is an expression returned from the function
+-The async block produces a value with the type Option<String>
+That value matches the Output type in the return Type
+-The new function body is an async move block  because of how it uses the url parameter
+
+main.rs
+async fn main(){
+   let args: Vec<String> = std::env::args().collect();
+   let url = &args[1];
+   match page_title(url).await {
+      Some(title) => println!("The title for {url} was {title}");
+      None => println!("{url} has no title");
+      }
+ }
+
+=Unfortunately the code does not compile, The only place where the await keyword can be used is in async functions
+or blocks, And Rust does not allow one to mark the main function as async
+=The reason why main cannot be marked as async, is that async code needs a runtime:
+a Rust crate that manages the details of executing asynchronous code
+A program's main function can initialize a runtime, but its not a runtime itself
+Every Rust program that executes async code has at least one place where it sets up a runtime and
+executes the futures
+=Rust has different async runtimes available, each of which makes different tradeoffs suitable to the use case
+it targets
+=Crates that provide those runtimes often supply async versions of common functionality such as file or network I/O
+=The run fn from the trpl crate, takes future as an argument and runs it to completion
+Calling run sets up a runtime that is used to run the future passed in, Once the future completes,
+run returns whatever value the future produced
+
+=race is built on a more general function, select
+It returns the Either type which uses  Left and Right to indicate "one or the other"
+enum Either<A, B>{
+Left(A),
+Right(B),
+}
+The race function returns Left with the output from the first future argument it finishes first, or Right with the output
+of the second future argument if that one finishes first. This matches the order arguments appear in when calling a function
+The first argument is to the left of the second argument
+
+NOTE: Each await point - that is every place where the code uses the await keyword -represents a place
+where control is handled back to runtime. To make that work, Rust needs to kep track of the state involved in async
+block so that the runtime can kick off some other work and then come back when its ready to try advancing
+the first one
+=The Rust compiler  creates and manages the state machine data structures for async code automatically
+=A runtime is what executes the state machine
+An executor  is the part of the runtime responsible for executing the async code
+Some runtimes provide macros so that one can write an async main function. These macros rewrite async fn main() {... }
+to be a normal fn main()

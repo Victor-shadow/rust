@@ -1,0 +1,174 @@
+I)The future trait
+-Rust defines the future trait as follows:
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+pub trait Future {
+   type Output;
+
+   fn poll(self: Pin<&mut self>, cx:&mut Context<'_>) -> Poll<Self::Output>;
+
+}
+=Future associated type Output says what the future resolves to. This is analogous to the Item
+associated type for the Iterator trait
+Future also has a poll method, which takes a special Pin reference for its self parameter and a mutable reference to a
+Context type and returns a Poll<Self::output>
+
+enum poll<T> {
+   Ready(T),
+   Pending,
+}
+=This poll type is similar to the Option. It has one variant that has a value, Ready(T) and one which does not
+Pending
+The Pending variant indicates that the future still has work to do, so the caller will need to check again later
+The Ready variant indicates that the future has finished its work and T value is available
+
+NOTE: With most futures the caller should not call poll again after the future has returned Ready
+Many futures will panic if polled again after becoming ready
+Futures that are safe to poll again indicate that
+
+NOTE: Code that uses await is compiled by rust under the hood  to code that calls poll
+
+*match page_title(url).poll() {
+   Ready(page_title) => match page_title {
+     Some(title) => println!("The title for the {url} was {title}");
+     None => println!("{url} has no title"),
+     }
+     Pending  => {
+
+     }
+  }
+
+If the future is still pending a loop is needed:
+let mut page_title_fut = page_title(url);
+
+loop {
+  match page_title_fut.poll() {
+    Ready(value) => match page_title {
+      Some(title) =>println!("The title for {url} was {title}");
+      None => println!("{url} has no title");
+      }
+      Pending =>{
+      //continue
+    }
+
+=If Rust compiles it to exact code, though, every await would be blocking exactly the opposite of what is required
+Rust makes sure that the loop can hand off control to something that can pause work on this future to work on other futures
+and then check it again later
+=Something refers to async runtime, and this scheduling and coordination work is one of its main jobs
+=The recv call returns a future, and awaiting the future polls it
+A runtime will pause the future until it is ready  with either Some(message) or None when the channel closes
+The runtime knows that the future  is not ready when the future returns Poll::Pending, conversely Runtime
+knows when the future is ready and advances it when Poll returns Poll::ready(Some(message)) or Poll::ready(None)
+
+*A runtime puts a future back to sleep when it is not ready
+
+------------------------------------------------------------------------------------------------------------------------
+
+II)Pin Trait
+=The trpl::join_all function returns a struct called JoinAll. That struct is generic over a type F
+which is constrained to implement the Future trait
+Directly awaiting a future with await pins the future implicitly
+When a new future is constructed called JoinAll and pass a collection of futures to the join_all function. The signature
+for join_all requires that the type of items in the collection all implement the Future trait and Box<T> implements future only
+if the T it wraps is a future that implements the Unpin trait
+
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+pub trait Future {
+  type Output;
+  //required method
+  fn poll(self: Pin<&mut self>, cx: &mut Context<'_>) -> Poll<Self::Output>;
+}
+
+The cx parameter and its Context type are the key to know how a runtime actually knows when to check any given future
+while still being lazy.
+=A type annotation for self has two key features:
+I)It tells Rust what type self must be for the method to be called
+II)It can't be just any type. It is restricted to the type on which the method is implemented, a reference or smart pointer
+to that type or Pin wrapping a reference to that type
+=If one wants to poll a future to check whether it is pending or Ready(Output), one needs a Pin-wrapped mutable reference to that
+type
+
+Pin is a wrapper for pointer-like types such as &, mut, Box and Rc(Pin works with types that implement the Deref and DerefMut traits )
+but this is effectively equivalent to working only with pointers
+Pin is not a pointer itself, and does not have a behaviour of its own like Rc ad Arc do with reference counting
+It is purely a tool that the compiler can use to enforce constraints on pointer usage
+
+NOTE: A series of await points in a future gets compiled into a state machine, and the compiler makes sure that state machine
+follows all of Rust normal conventions around safety, including Borrowing and Ownership. To make that work Rust
+at what data is needed between one await point and either the next await point  or the end of the async block. It then creates
+a corresponding variant in the compiled state machine. Each variant gets the access it needs to the data that will be used in that section
+of the source code, whether by taking ownership of that data or getting a mutable or immutable reference to it
+When we move a future whether by pushing it into a data structure to use as an iterator with join_all
+or returning it from a function that actually means moving the state machine Rust creates
+=The futures Rust creates for async blocks can end up with references to themselves in the fields of any given variant
+
+NOTE:By default though, an object that has references to itself is unsafe to move, because references always point to the
+actual memory address of whatever they refer to. If one moves the data structures itself, those internal references
+will be left pointing to the old location, However, that memory location is now invalid meaning its value does not get updated
+when changes to the data structure are made
+The rust borrow checker requires that the data structure in usage does not move in memory, so as to not update references and also
+prevent performance overhead by the compiler
+
+Pin builds on that by giving a guarantee that when a value is pinned by wrapping a pointer to that value
+in Pin it can no longer move
+Thus if one has a Pin<Box<Type>> you actually pin the SomeType Value not the Box pointer
+Pinning should be applicable to values that have internal references. Primitive values like Boolean, Numbers are safe
+because they obviously do not have any internal references
+
+Unpin
+=It is a Marker trait that does not have functionality of its own. Marker traits only exist to tell the compiler
+that it is safe to use the type implementing a given trait in a particular context
+Unpin informs the compiler that a given type does not need to uphold any guarantees about whether the value in question
+can be safely moved
+The compiler implements Unpin automatically for all types where it is proven it is safe
+
+Unpin not implemented for a type
+impl !Unpin for SomeType = SomeType is a name of a type that does not need to uphold these guarantees to be safe whenever
+a pointer to that type is used in a pin
+Unpin is the normal case and Unpin! is the special case
+Whether a type implements Unpin or !Unpin only matters when you are using a pinned pointer to that type
+
+Pin<&mut SomeType>
+Futures that do have internal references do not implement Unpin. They need to be pinned,
+
+Stream Trait
+=Streams are similar to asynchronous iterators. Unlike Future and Iterator, Stream has no definition in the standard library
+
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+trait Stream {
+ type Item;
+
+ fn poll_next(
+ self: Pin<&mut Self>,
+ cx: &mut Context<'_>
+ ) -> Poll<Option<Self::Item>>;
+ }
+
+ The Stream trait  defines an associated type called Item for the type of the items produced
+ by the Stream
+ This may be similar to Iterator where there might be zero to many items, and unlike Future, where there is always a single output
+ even if it is the unit type()
+ Stream also defines a method to get those items. We call it poll_next to make it clear that it polls the same way
+ Future::poll does and produces a sequence of items in the same way Iterator::next does. Its returns type combines Poll with option
+ The Outer type is Poll, because it has to be checked  for readiness just as Future does. The inner type is Option
+ because it needs to signal whether there are more messages just as Iterator does
+
+ trait StreamExt:Stream {
+    async fn next(&mut self) -> Option<Self::Item>
+    where
+    Self: Unpin;
+    //...other methods
+  }
+
+ fn next(&mut self) -> Next<'_, Self> where Self: Unpin;
+
+That Next type is a Struct that implements Future and allows one to name the lifetime of a reference
+to self with Next<'_, self> so that await  can work with the method
+StreamExt trait is implemented for every type that implements Stream
+In the version of StreamExt used in the trpl crate, the trait not only defines the next method but  also supports a default
+implementation of next that correctly handles the details of calling Stream::poll_next.

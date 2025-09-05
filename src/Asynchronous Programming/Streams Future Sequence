@@ -1,0 +1,122 @@
+=Streams in Rust are an asynchronous counterpart to iterators, allowing one to process a sequence
+of items as they become available over time without blocking the execution of a program
+=They are built on the future trait , which allows them to be asynchronous
+
+NOTE: =The async recv method produces a sequence of items over time. This is an instance of a more general
+      pattern called streams
+      =Async channel receivers are asynchronous; one can call recv().await and a task waits until a message is available
+      =A Stream is an asynchronous form of iteration
+      =Iterators are synchronous, while the channel receiver is asynchronous
+      =When working with iterators, we call the synchronous next method, with the trpl::Receiver stream we call
+      asynchronous recv method
+      =The trpl::Receiver  is used to specifically wait to receive messages
+      =The iterator trait uses:
+      iterator.next() //synchronous
+      =The trpl::Receiver stream uses:
+      =receiver.recv().await; //asynchronous
+
+------------------------------------------------------------------------------------------------------------------------
+let values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+let iter = values.iter().map(|n| n * 2);
+let mut stream = trpl::stream_from_iter(iter);
+
+while let Some(value) = stream.next().await {
+    println!("The value is {value}");
+ }
+=We create an array of numbers, which is converted to an iterator and then map is called to double
+the values
+The iterator is converted into a stream using trpl::stream_from_iter function
+Next one loops over the items in the stream as they arrive with the while let loop
+
+The reason for the compiler error is that there needs to be the right trait in the scope to use the next method
+The right trait needed is StreamExt rather than Stream
+Short of extension Ext is a common pattern in Rust community for extending one trait with another
+
+The Stream trait defines a low-level interface that effectively combines the Iterator and Future
+traits
+
+=To fix the compiler error is to add a use statement for trpl::StreamExt
+
+use trpl::StreamExt;
+
+fn main(){
+    trpl::run(async {
+      let values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      let iter = values.iter().map(|n| n * 2);
+      let mut stream = trpl::stream_from_iter(iter);
+
+      while let Some(value) = stream.next().await{
+         println!("The value was: {value}");
+         }
+        });
+        }
+
+=One can now use all the utility methods so long as StreamExt is in scope
+use trpl::StreamExt;
+
+fn main(){
+    trpl::run(async {
+      let values = 1..101;
+      let iter = values.map(|n| n * 2);
+      let stream = trpl::stream_from_iter(iter);
+
+      let mut filtered = stream.filter(|value| value % 3 == 0 || value % 5 == 0);
+
+      while let Some(value) = filtered.next().await {
+        println!("The value was: {value}");
+        }
+    });
+}
+-------------------------------------------------------------------------------------------------------------------------
+
+
+The Stream and StreamExt Traits
+-The core of the Stream functionality in Rust is defined by two traits: Stream and StreamExt
+i)Stream trait: This is the low-level trait that defines the fundamental contract for a stream. It is similar to the iterator
+trait in that it provides a way to get the next item, but does it asynchronously. It combines the functionality of the
+iterator(providing the next item) and Future(allowing asynchronous waiting)
+
+ii)StreamExt Trait: This is an extension trait that provides a rich set of high level convenience methods
+for working with Streams. By using StreamExt , one gains access to methods like: next(), filter()
+map(), throttle(), merge(), timeout() which are essential for composing and manipulating Streams. For the methods to be used
+one must bring the StreamExt trait into scope with a use statement
+
+Stream from an iterator
+=One can easily convert a synchronous iterator  into an asynchronous stream. This is useful for making existing synchronous data
+sources compatible with an async environment. The function trpl::stream_from_iter takes an iterator and returns a stream
+When one calls stream.next().await on this newly created stream, it immediately returns the next item from the underlying iterator
+because all items are already available
+
+Composing Streams
+=The True power of Streams lie in their ability to be composed and combined with other asynchronous operations
+Because streams produce Future for their items, they can be integrated into any async context
+
+Async message channel: Streams are used in handling data from message passing channels. The trpl::channel creates a pair of
+sender(tx) and receiver(rx) The ReceiverStream::new(rx) function turns the asynchronous receiver
+into a stream, allowing one to iterate over incoming messages as they arrive
+(Useful in realtime communication in websockets)
+
+Timeouts: The StreamExt::timeout method allows one to set the timelimit for each item in a stream
+If an item does not arrive within the specified duration, the Stream returns an Err variant, typically an Elapsed Error
+The underlying stream will continue to produce items , but the timeout handler will be able to react to the delays
+This is useful in handling flaky and slow data sources
+
+Merging Streams: The StreamExt::merge method combines two streams of the same type into a single stream
+The merged stream produces items from either source as soon as they become available
+It is ideal for situations when data needs to be processed from multiple independent sources concurrently like combining
+user input events with network events
+
+Throttling: The StreamExt::throttle method limits the rate at which items are produced from the stream
+It is a way to introduce minimum delay between  items. this is particularly useful in controlling resource consumption
+such as avoiding a flood of network calls or preventing an application from  becoming overwhelmed by a high frequency stream
+of events
+
+take: The StreamExt::take method limits the total number of items produced by a stream. This is a simple and effective way to terminate
+an infinite stream after a certain number of items have been processed, preventing a program from running indefinitely
+
+The pin! macro
+=The pin! macro if often required when working with streams and futures. It ensures that data an async operation
+is working with does not move in memory. This is a key safety requirement in Rust's asynchronous runtime
+When one uses a method that returns a new stream like timeout and merge the resulting stream often needs to be pinned before
+one can await its items
+

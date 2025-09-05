@@ -1,0 +1,191 @@
+:Async Concurrency
+=Rust's async and await paradigm  provides a powerful model for handling concurrent operations
+without the overhead of the traditional OS threads. Unlike threads, which are managed by the operating system
+and require significant resources for creation and context switching
+Async tasks run on a user-space scheduler that can manage concurrent tasks on a smaller number of OS threads
+=Asynchronous programming is suitable  for I/O bound workloads such as web servers, databases and
+network applications where operations spend significant time waiting for external resources
+
+Difference between the async and thread-based concurrency lies on their execution model
+i)Thread based concurrency uses blocking operations and relies on OS scheduling
+ii)Async concurrency uses non blocking operations and requires explicit  await points
+iii)Performance characteristics differ significantly - threads have higher memory overhead (each thread requires its own stack)
+while async tasks have minimal overhead
+
+Thread-Based Approach
+std::thread::spawn(|| {
+//Blocking operation
+  download_data("https://www.rust-lang.org");
+  });
+
+//Async Approach
+tokio::spawn(async {
+   //Non blocking operation
+   download_data_async("https://www.rust-lang.org").await;
+ });
+
+
+Spawning Async Tasks
+=Spawning async task allows one to run operations in the background while continuing to execute other code
+The async_std::task::spawn function or tokio::spawn in the Tokio runtime creates a new task and returns a JoinHandle that can be used
+to await the task's completion
+
+Using JoinHandle
+The JoinHandle returned by spawn implements the Future trait, allows one to await  the task completion, if not awaited the
+task may be cancelled when the handle is dropped
+
+use futures::future::join_all;
+
+async fn task_spawner() {
+   let tasks = vec! [
+     tasks::spawn(my_task(Duration::from_secs(1))),
+     tasks::spawn(my_task(Duration::from_secs(2))),
+     tasks::spawn(my_task(Duration::from_specs(3))),
+     tasks::spawn(my_task(Duration::from_specs(4))),
+
+    ];
+    //wait for all tasks to finish
+    join_all(tasks).await;
+}
+
+
+Joining Futures
+The join! macro from the futures crate allows for waiting for multiple futures to complete concurrently
+rather than sequentially
+
+Basic Joining
+use futures::join;
+
+async fn get_function_and_display() -> (function, display) {
+ let fun_fut = get_fun();
+ let display_fut = get_display();
+ join!(fun_fut, display_fut)
+}
+
+Without join! awaiting features sequentially would be slower
+async fn get_function_and_display() -> (function, display){
+  let fun = get_fun().await;
+  let display = get_display().await;
+  (fun, display)
+}
+
+Error handling with try_join
+For futures that return Results, use try_join! which short circuits immediately if any future returns an error
+
+use futures::try_join;
+
+async fn get_function() -> Result<Function, String> { /*     */ Ok(Function)}
+async fn get_display() -> Result<Display String> {/*       */ ok(Display)}
+
+async fn get_function_and_display() -> Result<(Function, Display), String> {
+    let fn_mut = get_function();
+    let display_mut = get_display();
+    try_join!(fn_mut, display_mut)
+}
+
+
+When futures have different error types consolidate them using map_err or err_into
+
+use futures::{future::TryFutureExt, try_join};
+async fn get_fun() -> Result<Function, ()> {/*     */ Ok(Function)}
+async fn get_display() -> Result<Display, String> {/*       */ Ok(Display)}
+async fn get_fun_and_display() -> Result<(Function, Display), String> {
+  let fun_mut = get_fun().map_err(|()| "Unable to get function".to_string());
+  let display_mut = get_display();
+  try_join!(fun_mut, display_mut)
+ }
+
+Message Passing with Async channels
+=Async channels provide communication mechanism between tasks similar to thread_based channels
+but with non-blocking operations
+
+Multiple producers
+Async channel supports multiple producers, similar to std::mpsc channels
+
+Channel Ownership and Closing
+-Proper ownership management is crucial for avoiding hangs. Use async move blocks to
+ensure channels are dropped efficiently
+
+#[tokio::main]
+async fn main(){
+  let (tx, mut rx) = channel::unbounded();
+
+  let sender_task = task::spawn(async move {
+  //tx is moved into this block and will be dropped when the block ends
+  for val in vec!["Java", "Kotlin", "Scala", "Python", "Rust"] {
+     tx.send(val.to_string()).await.unwrap();
+     task::sleep(Duration::from_millis(500)).await;
+     }
+     //tx is dropped here, closing the channel
+    });
+
+    let receiver_task = task::spawn(async move {
+     while let Some(value) = rx.recv().await{
+        println!("Received: {}", value);
+        }
+        //Loop exits when the channel is closed
+        });
+
+        join!(sender_task, receiver_task).await;
+ }
+
+Async Error Handling and Cancellation
+Async tasks can be cancelled by dropping their join handle, which stops the task from making further
+progress
+
+Selective cancellation
+The select! macro allows on waiting on multiple futures and handling the first one that completes
+
+Performance Characteristics and Optimization
+Deep Async Call Chains
+-Deeply nested async calls may cause performance issues due to the chain of poll calls
+
+async fn level_1() {
+    level_2().await
+  }
+
+async fn level_2() {
+    level_3().await
+ }
+
+ async fn level_n() {
+   for _ in 0..10 {
+     io_operation().await;
+  }
+
+ Each await point adds to the call stack, potentially resulting in O(n x m) complexity for deep
+ hierarchies and iterations
+
+Optimization Strategies
+Flatten async hierarchies where possible
+Use spawn to break deep call chains into separate tasks
+Batch operations reduce await points
+
+//Instead of awaiting each operation sequentially
+async fn  process_items(items: &[Item]) {
+   for item in items {
+     process_item(item).await; //many await points
+    }
+ }
+
+ //Batching
+ async fn process_items_batched(items: &[Item]){
+    let mut futures = vec![];
+    for item in items {
+    futures.push(process_item(item));
+  }
+  join_all(futures).await; //single await points
+ }
+
+Threads and Async
+When to use Async
+i)I/O bound workloads (network servers and databases)
+ii)Massive Concurrency(handling multiple connections)
+iii)Control over execution(explicit await points)
+iv)Reduced memory footprint compared to threads
+
+When to Use Threads
+=CPU-Bound workload: computation, data processing
+=Blocking Operations(file I/O using async file system)
+Simple concurrency with limited number of tasks
+Integration with synchronous code

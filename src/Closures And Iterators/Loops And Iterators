@@ -1,0 +1,12 @@
+=To determine whether to use loops or iterators one needs to know which implementation
+is faster
+=Iterators although a high level abstraction get compiled down to roughly the same code
+as the lower level
+=Iterators are one of Rust's zero cost abstraction, by which it means that using the abstraction imposes
+no additional runtime overhead
+=Unrolling is an optimization that removes the overhead of the loop controlling code and instead generates repetitive
+code for each iteration of the loop
+
+NOTE: The env::args function returns an iterator of type std::env::Args, , and it implements an Iterator trait and returns String
+values
+There is passing of ownership of the iterator returned returned from env::args to Config::build directly

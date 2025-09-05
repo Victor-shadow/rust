@@ -1,0 +1,67 @@
+Function Pointers
+=One can also pass regular functions to functions as well as passing closures to
+functions
+=The technique is useful when one wants to pass a function, that has already been defined rather than
+defining a new closure
+=Functions coerce to the type fn(which is lowercase f)
+The fn type is called a function pointer, Passing functions with function pointers allows one to use functions
+as arguments to other functions
+=The syntax for specifying that a parameter is a function pointer is similar to that of closures
+
+Unlike closures, fn is a type rather than a trait, so one specifies fn as a parameter type directly rather than
+declaring a generic  type parameter with one of the Fn traits as a trait bound
+Function pointers implement all the three of closure traits(Fn, FnMut, FnOnce) meaning one can always pass a function
+pointer as an argument for a function that expects a closure. It is best to write functions using a generic type and one
+of the closure traits so that a function can either accept functions or closures
+If one only wants a function to accept any other functions but not closures is when interfacing with external code
+that does not have closures
+
+NOTE:The name of each enum variant that is defined also becomes an initializer function. One can use these initializer functions
+as function pointers that implement closure traits, which means that one can specify the initializer functions as arguments
+for methods that take closures
+
+enum Status {
+  Value(u32),
+  Stop,
+}
+
+let list_of_status: Vec<Status> = (0u32..20).map(Status::value).collect();
+=We create Status::value instances using each u32 values in the range that map is called on by using
+the initializer function of Status::value
+
+Returning Closures
+=Closures are represented by traits, which means that closures cannot be returned directly
+If one wants to return a trait, one can instead use the concrete type that implements the trait
+as the return value of the function
+However, one can't usually do that with closures, because they do not have a concrete type that is
+returnable. One is not allowed to use the function pointer fn as a return type if the closure captures any values from its scope
+
+Instead, one will normally use the impl Trait syntax. One can return any function type using FnOnce, Fn, FnMut
+
+fn returns_closure() -> impl Fn(i32) -> i32 {
+   |x| x + 1
+}
+
+NOTE: Each closure is also its distinct type, If one needs to work with multiple functions that have the same signature
+but different implementations, one needs to use a trait object for them
+
+fn main(){
+  let handlers = vec![returns_closure(), returns_initialized_closure(123)];
+  for handler in handlers {
+    let output = handler(5);
+    println("{output}");
+    }
+ }
+
+fn returns_closure() -> impl Fn(i32) -> i32 {
+ |x| x + 1
+}
+
+fn returns_initialized_closure(init:i32) -> impl Fn(i32) -> i32 {
+  move |x| x + init
+}
+The error message mentions that whenever we return an impl Trait Rust creates a unique opaque type
+a type where one cannot see into details of what Rust constructs
+So even though both of these functions return closures that implement the same trait Fn(i32) -> i32, the opaque
+types that Rust generates for each is unique/distinct(This is how rust produces different concrete types for distinct async block even when they have the same output type)
+

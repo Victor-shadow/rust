@@ -1,0 +1,312 @@
+=Rust has a second language hidden inside it that does not enforce these memory safety guarantees, it is
+called Unsafe Rust
+=Unsafe Rust exists because, by nature static analysis is conservative. When the compiler tries to decide
+whether or not the code upholds guarantees, it is better for it to reject some valid programs than to accept some
+invalid programs
+=Although the code might be okay, if the Rust compiler does not have enough information to be confident,
+it will reject the code. In this cases one can use unsafe code to tell the compiler , "that one knows what they are doing"
+Be warned, however, that you use unsafe Rust at your own Risk
+If one uses unsafe code incorrectly, problems can occur due to memory unsafety, such as null pointer
+dereferencing
+=Another Reason rust has an unsafe alter ego is that the underlying computer hardware is inherently unsafe
+If Rust does not let one do  unsafe operations, one could not do certain tasks
+Rust needs to allow one to do low level systems programming, such as interacting directly with the operating
+system or even writing one's own operating system
+
+Unsafe Super powers
+=To switch to unsafe Rust, use the unsafe keyword and then start the new block that holds unsafe code
+You can take five actions in unsafe Rust that you cannot in Safe Rust, which we call unsafe super powers
+These super powers include the ability to:
+i)Dereference a raw pointer
+ii)Call an unsafe function or method
+iii)Access or modify a mutable static variable
+iv)Implement an unsafe trait
+v)Access fields of a union
+
+It is important to understand that unsafe does not turn off the borrow checker or disable any Rust
+safety checks. If one uses reference in an unsafe code, it will still be checked. The unsafe keyword only gives
+access to the five features that are then not checked by the compiler for memory safety. One still gets some degree of safety
+inside an unsafe block
+
+In addition, unsafe does not mean that the code inside the block is necessarily dangerous, or that it will definitely have memory
+safety problems, the intent is that as the programmer, you ensure that the code inside the unsafe block will access memory in a valid way
+=Requiring this five operations to be inside blocks annotated with unsafe keyword, you will know that any errors related to memory
+safety must be  within an unsafe block. Keep unsafe blocks small
+=To Isolate unsafe code as much as possible, it is best to enclose such code within a safe abstraction and provide a safety API
+Parts of the standard library are implemented as safe abstractions over unsafe code that has been audited
+Wrapping unsafe code in a safe abstraction prevents uses of unsafe from leaking out into all the places that one or other users might want to  use
+the functionality implemented with unsafe code because using safe abstraction is safe
+
+------------------------------------------------------------------------------------------------------------------------
+Dereferencing a Raw Pointer
+=The compiler always ensures that references are valid, Unsafe rust has two new types called raw pointers that are similar to
+references.
+As with references, raw pointers can be mutable or immutable and are written as *const T and *mut
+T respectively
+=The asterisk is not the dereference operator(*), its part of the type name
+In the context of raw pointers immutable means  that the pointer cannot be directly assigned to after being dereferenced
+Different from references and smart pointers raw pointers:
+i)Are allowed to ignore borrow rules by having both immutable and mutable pointers or multiple mutable
+pointers to the same location
+ii)Are not guaranteed to point to the valid memory
+iii)Are allowed to be null
+iv)Do not implement any automatic cleanup
+
+By opting out of having Rust enforces these rules, one can give up guarantee safety in exchange for greater performance or the
+ability to interface with other languages or Hardware where Rust 's guarantees do not apply
+
+Creating mutable and immutable raw pointer
+let mut num = 5;
+
+let r1 = &raw const num;
+let r2 = &raw mut num;
+
+We do not include the unsafe keyword in this code, We create raw pointers in safe code; we just can't dereference raw pointers outside
+an unsafe block
+=We have created raw pointers by using raw borrow operators: &raw const num creates a *const i32 immutable
+raw pointer, and *raw mut num creates a *mut i32 mutable raw pointer. Because they have been created directly from a local variable, we know that these
+raw pointers are valid, but an assumption cannot be made about just any raw pointer
+
+Creating a raw pointer to an arbitrary memory location/address
+let address = 0x012345usize;
+//use of as to cast a value instead of the raw borrow operators
+let r = address as *const i32;
+
+=Trying to use arbitrary memory is undefined; there might be data at that address or there might be not
+the compiler might optimize the code so there is no memory access, or the program might terminate with a segmentation fault
+NOTE: We can create raw pointers in safe code, but raw pointers cannot be dereferenced and read the data being pointed to
+
+Use of a dereference operator on a raw pointer that requires an unsafe block
+let mut num = 100;
+let r1 = &raw const num;
+let r2 = &raw mut num;
+
+unsafe {
+  println!("r1 is: {}", *r1);
+  println!("r2 is: {}", *r2);
+  }
+
+Creating a pointer does no harm, it is only when one tries to access the value that it points to that we might end up
+dealing with an invalid value
+We created *const i32 and *mut i32 raw pointers that both pointed to the same memory location, where num is stored
+If instead one tries to create an immutable and mutable reference to num, the code would not compile because Rust's ownerships
+rules do not allow a mutable reference at the same time as any immutable references
+With raw pointers one can create a mutable pointer and an immutable pointer to the same location and change data
+through the mutable pointer, potentially creating a data race
+
+Calling an Unsafe Function or Method
+=The second type of operation that can be performed in an unsafe block is calling unsafe functions
+Unsafe functions and methods look exactly like regular function and methods but they have an extra unsafe before the rest of the
+definition. The unsafe keyword in this context indicates that the function has requirements that need to be uploaded
+when the function is called, because Rust cannot guarantee that the Requirements are met. By calling an unsafe function within an unsafe block
+we've read the functions documentation and one takes responsibility for upholding the function's contracts
+
+Unsafe function that has no implementation in its body
+unsafe fn dangerous() {
+   unsafe {
+     dangerous();
+ }
+We must call the dangerous function within a separate unsafe block. If we try to call dangerous without the unsafe block, we
+get an error
+With an unsafe block, we assert to Rust that we have Read the function's documentation, we understand how to use it properly
+and we have verified that we have fulfilled the contract of the function
+To perform unsafe operations in the body of an unsafe function, you still need to use the unsafe block
+just as within a regular function, and the compiler warns one if they forget
+These helps to keep unsafe blocks as small as possible, as unsafe operations may not be needed across the whole function
+body
+
+Creating a Safe Abstraction over Unsafe Code
+Just because a function contains unsafe code , does not mean we need to mark the entire function as unsafe
+In fact, wrapping unsafe code in a safe function is a common abstraction
+The split_at_mut function from the standard library, requires some unsafe code
+The safe method is defined on mutable slices; It takes one slice and makes it two by splitting the slice at the index given as an
+argument
+
+let mut v = vec![1, 2, 3, 4, 5, 6];
+let r = &mut v[..];
+let(a, b) = r.split_at_mut(3);
+assert_eq!(a, &mut [1, 2, 3]);
+assert_eq!(b, &mut [4, 5, 6]);
+
+This function cannot be implemented only using safe Rust.
+
+fn split_at_mut(values: &mut [i32], mid:usize) -> (&mut [i32], &mut[i32]) {
+   let len = values.len();
+
+   assert!(mid <= len);
+
+   (&mut values[..mid], &mut values[..mid])
+}
+This function first gets the total length of the slice. Then it asserts that the index given as a parameter
+is within the slice by checking whether it is less than or equal to the length
+The assertion means that if we pass the  index that is greater than the length to split the slice at, the function will panic before
+it attempts to use that index
+Then we return two mutable slices in a tuple, one from the start of the original slice to the mid index and another from mid to the end
+of the slice
+
+Rust borrow checker cannot understand that we are borrowing different parts of the slice; it only knows that
+we are borrowing from the same slice twice. Borrowing from different parts of the slice is fundamentally okay
+because the two slices are not overlapping. But Rust is not smart enough to know this
+
+unsafe code in the implementation  of the split_at_mut function
+use std::slice;
+
+fn split_at_mut(values: &mut [i32], mid: usize) -> (&mut [i32], &mut[i32]){
+  let len = values.len();
+  let ptr = values.as_mut_ptr();
+
+  assert!(mid <= len);
+
+  unsafe {
+    (
+    slice::from_raw_parts_mut(ptr, mid),
+    slice::from_raw_parts_mut(ptr.add(mid), len - mid),
+    )
+   }
+ }
+
+Slices are a pointer to some data and some length of the slice. We use the len method to get the length of the slice and the as_mut_ptr method
+to access the raw pointer as a slice. In this case, because we have a mutable slice to i32 values, as_mut_ptr  returns a raw pointer
+with the type *mut i32 which is stored in the variable ptr
+We keep the assertion that the mid index is within the slice. Then we get to the unsafe code: slice::from_raw_parts_mut
+function takes a raw pointer and the length, and it creates a slice
+We use it to create a slice that starts from ptr and its mid items long. Then we call the add method on ptr with mid as an argument to get a raw pointer
+that starts at mid, and we create a slice using that pointer and the remaining number of items after mid as the length
+
+The function slice::from_raw_parts_mut is unsafe because it takes a raw pointer and must trust that the pointer is valid
+The add method on raw pointers is also unsafe because it must trust that the offset location is also a valid pointer. Therefore, we have to put an unsafe block
+around our calls to slice::from_raw_parts_mut and add so that we can call them. By looking at the code and by adding the assertion that mid must be less than or equal to len, we can tell
+that all the raw pointers used within the unsafe block will be valid pointers to data within the slice. This is an acceptable and appropriate use
+of unsafe
+Note: We do not need to mark the resultant split_at_mut function as unsafe, we can call this function from safe Rust
+We have created a safe abstraction to the unsafe code with an  implementation of the function that uses unsafe code in a safe way
+because it creates only valid pointers from the data this function has access to
+
+Creating a Slice from an arbitrary memory location
+use std::slice;
+
+let address = 0x012345usize;
+let r = address as *mut i32;
+
+let values: &[i32] = unsafe { slice::from_raw_parts_mut(r, 10000) };
+
+We do not own memory at this arbitrary location and there is no guarantee that the slice this code creates
+contains valid i32 values. Attempting to use values as though it is a valid slice results in undefined behaviour
+
+Using external Functions to call External Code
+Sometimes, Rust code needs to interact with code written in another language. For this Rust has the keyword extern that facilitates the creation
+and use of a Foreign Function Interface
+An FFI is a way for a programming language to define functions and enable a different(foreign) programming language to call
+those functions
+
+Set up an integration with the abs function from the C standard library. Functions declared within extern blocks are generally unsafe
+to call from Rust code, so extern blocks must also be marked unsafe
+The Reason is that other languages do not enforce Rust rules and guarantees, and Rust can't check them
+
+src/main.rs
+unsafe extern "C" {
+  fn abs(input: i32) -> i32;
+}
+
+fn main() {
+  unsafe {
+   println!("Absolute value of -3  according to C: {}", abs(-3));
+   }
+}
+Within the unsafe extern "C"  block we list the names and signatures of external functions from another language we want to call
+The "C" part defines which application binary Interface the external function uses The ABI  defines how to call the function at the assembly level
+The "C" ABI is the most common and follows the C Programming language ABI
+Every item declared within a unsafe extern block is implicitly unsafe. However some FFI functions are safe to call
+The abs function from C standard's library does not have any memory safety considerations and we know it can be called with any i32
+In such cases one can use the safe keyword to say that a specific function is safe to call even though it is in an unsafe  extern block
+
+src/main.rs
+unsafe extern "C" {
+   safe fn abs(input: i32) -> i32;
+}
+fn main() {
+  println!("Absolute value of -3 according to C: {}", abs(-3));
+}
+
+Making a function as safe does not inherently make it safe! instead it is like a promise you make to Rust that it is safe
+It is still the responsibility of the programmer to ensure the promise is kept
+
+Calling Rust functions from other Languages
+=We can also use extern to create an interface that allows other languages to call Rust functions. Instead,
+of creating a whole extern block, we add the extern keyword and specify the ABI to use just before the fn keyword for the
+relevant function
+=We also need to add an #[unsafe(no_mangle)] annotation to tell Rust compiler not to mangle the name of this function
+Mangling is where a compiler changes the name we have given a function to a different name that contains more information
+for other parts of the compilation process to consume but less readable
+Every programming language compiler mangles names slightly differently, so for a Rust function to be nameable by other languages, we must disable
+Rust's compiler name mangling. This is unsafe because there might be name collisions across libraries without the built-in mangling
+so it is one responsible to make sure the name we choose is safe to export without mangling
+
+#[unsafe(no_mangle)]
+pub extern "C" fn call_from_c() {
+  println!("Just called a Rust function from C");
+}
+This usage of extern requires unsafe only in the attribute, not on extern block
+
+Accessing or Modify Mutable Static variable
+=In Rust global variables are called static variables
+NOTE: If two threads are accessing the same mutable global variable it can cause data race
+Static variables are similar to CONSTANTS, The names of static variables are in SCREAMING_SNAKE_CASE
+by convention. Static variables can only store references with the 'static lifetime , which means the Rust compiler can figure out the
+lifetime and we are not required to annotate it explicitly. Accessing an immutable static variable is safe
+A subtle difference between constants and immutable static variables is that values in a static variable have a fixed
+address in memory. Using the value will always access the same data. Constants are allowed to duplicate data whenever they are used
+Static variables can be mutable. Accessing and modifying mutable static variables is unsafe
+
+=As with regular variables, we specify mutability using the mut keyword. Any code that reads or writes from COUNTER
+must be within an unsafe block.
+Whenever we write an unsafe function,, it is idiomatic to write a comment starting with SAFETY to explain  how the safety rules are upheld
+Additionally, the compiler will not allow one to create mutable static variable.You can only access it via a Raw pointer,created with
+one of the raw borrow operators,That includes in cases where references is created invisibly,  as used in the println!
+The requirements that references to static mutable variables can only created via raw pointers helps make the safely requirements for using them more obvious
+
+With mutable data that is globally accessible, it is difficult to ensure there are no data races
+which is why rust considers mutable static variables to be unsafe
+
+Implementing the unsafe Trait
+-We can use unsafe to implement an unsafe trait. A trait is unsafe when at least one of its methods has some variant
+that the compiler can't verify
+=One can declare that a trait is unsafe  by adding the unsafe keyword, before trait and marking the implementation of the trait
+is unsafe
+
+unsafe trait Main {
+  //methods go here
+}
+
+unsafe impl Main for i32 {
+//methods implementation go here
+}
+
+By using, unsafe impl,we promise to uphold the invariants that the compiler can't verify
+
+Accessing Fields and Unions
+=The final action that works only with unsafe is accessing fields of a union. A union is similar to a struct ,but only one declared field
+is used in a particular instance at one time. Unions are primarily used to interface with unions of C code
+Accessing union fields is unsafe, because Rust can't guarantee that the type of data currently being stored in
+the union instance
+
+Using Miri to check Unsafe Code
+=When writing unsafe code, you might want to check that what you have written actually is safe and correct
+One of the best ways to do that is to use Miri, an official Rust tool for detecting undefined behaviour
+Whereas the borrow checker is a static tool that works at compile time
+Miri is a dynamic tool that works at runtime. It checks your code at runtime, or its test suite, and detecting when you violate
+the rules it understands about how Rust should work
+Using Miri requires a Nightly build of Rust
+To install a nightly version of Rust and Miri
+*rustup +nightly component add miri
+*Miri correctly warns one that we have shared references to mutable data. Miri only issues a warning
+because this is not guaranteed to be an undefined behaviour in this case, and it does not mention how to fix the problem
+,but there is a risk of undefined behaviour and can think of how to make it safe
+In some cases, Miri can detect  outright errors, code patterns that are sure to be wrong- and make recommendations about
+to how to fix those errors
+Miri does not catch everything you might get wrong when writing unsafe code
+Miri is a dynamic analysis tool  so it only catches problems with code that actually gets run
+That means it can actually conjunction with good testing techniques to increase certainty about the unsafe code written
+Miri also does not cover every possible way your code your code can be unsound
+
+
